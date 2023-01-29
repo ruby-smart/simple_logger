@@ -2,3 +2,4 @@
 --markup=markdown
 --files docs/*.*
 --plugin relative_markdown_links
+--exclude lib/ruby_smart/simple_logger/core_ext
