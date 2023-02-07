@@ -1,5 +1,8 @@
 # RubySmart::SimpleLogger - CHANGELOG
 
+## [1.1.1] - 2023-02-07
+* **[fix]** 'ruby 2.6.x' kwargs for `::Logger::LogDevice` messed up with 'binmode'
+
 ## [1.1.0] - 2023-02-07
 * **[add]** `#processed` method for logger
 * **[ref]** `Debugger` to enforce a 'DEBUG' severity

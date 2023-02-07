@@ -81,13 +81,19 @@ module RubySmart
 
                                 # special case handling to additionally stdout logs
                                 ::RubySmart::SimpleLogger::Devices::MultiDevice.register(
-                                  ::Logger::LogDevice.new(_logdev(builtin),
-                                                          shift_age:           opts[:shift_age] || 0,
-                                                          shift_size:          opts[:shift_size] || 1048576,
-                                                          shift_period_suffix: opts[:shift_period_suffix],
-                                                          binmode:             opts[:binmode]),
-                                  ::RubySmart::SimpleLogger::Formatter.new(format: device_format, nl: _nl(opts), clr: false)
-                                )
+                                  if GemInfo.match?(RUBY_VERSION, '< 2.7')
+                                    ::Logger::LogDevice.new(_logdev(builtin),
+                                                            shift_age:           opts[:shift_age] || 0,
+                                                            shift_size:          opts[:shift_size] || 1048576,
+                                                            shift_period_suffix: opts[:shift_period_suffix])
+                                  else
+                                    ::Logger::LogDevice.new(_logdev(builtin),
+                                                            shift_age:           opts[:shift_age] || 0,
+                                                            shift_size:          opts[:shift_size] || 1048576,
+                                                            shift_period_suffix: opts[:shift_period_suffix],
+                                                            binmode:             opts[:binmode])
+                                  end,
+                                  ::RubySmart::SimpleLogger::Formatter.new(format: device_format, nl: _nl(opts), clr: false))
                                                                                .register(STDOUT, ::RubySmart::SimpleLogger::Formatter.new(format: device_format, nl: _nl(opts), clr: opts[:clr]))
                               else
                                 builtin
