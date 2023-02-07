@@ -57,7 +57,7 @@ RSpec.describe "Scenes extension" do
     end
 
     it 'resolves scene options' do
-      expect(@logger.send(:_scene_opt, :info)).to eq({ level: :info, mask: { clr: :cyan }, payload: [[:mask, ' [%{subject}] '], :_data, :mask] })
+      expect(@logger.send(:_scene_opt, :info)).to eq({ level: :info, mask: { clr: :cyan }, payload: [[:mask, ' [%{subject}] '], :__data__, :mask] })
     end
 
     it 'merges scene options' do

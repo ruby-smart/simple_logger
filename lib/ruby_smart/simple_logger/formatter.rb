@@ -19,30 +19,25 @@ module RubySmart
 
       # set default formats
       self.formats = {
-        # the ruby default's logging format (except to format the severity to 7-chars)
-        default: {
-          str: "%s, [%s #%d] %7s -- %s: %s",
-          cb:  lambda { |severity, time, progname, data| [severity[0], format_datetime(time), $$, severity, progname, msg2str(data)] }
+        # the ruby default's logging format -except the reformatted severity to 7-chars (instead of 5)
+        default: -> (severity, time, progname, data) {
+          _nl data2array(data, false).map { |str|
+            str == '' ? str : _clr(format('%s, [%s #%d] %7s -- %s: ', severity[0], format_datetime(time), $$, severity, progname), severity) + _declr(str)
+          }
         },
-        # all provided args as array
-        passthrough: {
-          str: false, # no formatting
-          cb: lambda { |*args| args }
-        },
-        # the plain data (msg) only, no severity, etc.
-        plain: {
-          str: false, # no formatting
-          cb: lambda { |_severity, _time, _progname, data| data }
-        },
-        # special array data for memory-logging
-        memory: {
-          str: false, # no formatting
-          cb: lambda { |severity, time, _progname, data| [severity.downcase.to_sym, time, data] }
-        },
-        # special datalog data with all provided data in additional brackets -> [data] [data] [data]
-        datalog: {
-          str: "[%7s] [%s] [#%d] [%s]",
-          cb:  lambda { |severity, time, _progname, data| [severity, format_datetime(time, true), $$, msg2str(data, true)] }
+
+        # simply 'passthrough' all args, without any formatting
+        passthrough: -> (*args) { args },
+
+        # just forward the formatted data, without any other args (no severity, time, progname)
+        plain: -> (_severity, _time, _progname, data) { _nl _declr(data.to_s) },
+
+        # specialized array for memory-logging
+        memory: -> (severity, time, _progname, data) { [severity.downcase.to_sym, time, data] },
+
+        # specialized string as datalog with every provided data in additional brackets -> [data] [data] [data]
+        datalog: -> (severity, time, _progname, data) {
+          _nl _declr(format('[#%d] [%s] [%s] [%s]', $$, format_datetime(time, true), severity, data2datalog(data)))
         }
       }
 
@@ -66,23 +61,16 @@ module RubySmart
         opts[:nl]     = true if opts[:nl].nil?
         opts[:format] = :default if opts[:format].nil?
 
-        @opts = opts
+        # only store required options
+        @opts = opts.slice(:nl, :format, :clr)
       end
 
-      # standard call method - used to format provided terms
+      # standard call method - used to format provided params
       def call(severity, time, progname, data)
-        if current_format_str
-          str = current_format_str % instance_exec(severity, time, progname, data, &current_format_cb)
-          str << "\n" if opts[:nl]
-
-          # check for colorized output
-          (opts[:clr] && SEVERITY_COLORS[severity]) ? str.send(SEVERITY_COLORS[severity]) : str
-        else
-          instance_exec(severity, time, progname, data, &current_format_cb)
-        end
+        instance_exec(severity, time, progname, data, &current_formatter)
       end
 
-      # returns all formats
+      # returns all class formats
       # @return [Hash] formats
       def formats
         self.class.formats
@@ -109,24 +97,71 @@ module RubySmart
         @opts.merge!(opts)
       end
 
-      # clears auto-generated / cached data
+      # clears current formatter
       def clear!
-        @current_format = nil
+        @current_formatter = nil
       end
 
       private
 
-      def current_format
-        @current_format ||= self.formats.key?(opts[:format]) ? self.formats[opts[:format]] : self.formats.values.first
+      # returns the current formatter callback
+      # @return [Proc]
+      def current_formatter
+        @current_formatter ||= self.formats[opts[:format]] || self.formats.values.first
       end
 
-      def current_format_str
-        current_format[:str]
+      # splits-up the provided data into a flat array.
+      # each will be split by new-line char +\n+.
+      # @param [Object] data
+      # @param [Boolean] allow_array
+      # @return [Array<String>]
+      def data2array(data, allow_array = true)
+        case data
+        when ::String
+          data.split("\n", -1)
+        when ::Array
+          # prevent to split-up arrays into multiple lines for this format:
+          # a array should +not+ be multi-lined
+          return data2array(data.inspect) unless allow_array
+
+          data.map { |item| data2array(item) }.flatten
+        when ::Exception
+          [
+            "exception: #{data.class}",
+            data2array(data.message),
+            data.backtrace || []
+          ].flatten
+        else
+          data2array(data.inspect)
+        end
       end
 
-      def current_format_cb
-        current_format[:cb]
+      # splits-up the provided data into a single string with each data item in brackets -> [data] [data] [data]
+      # @param [Object] data
+      # @return [String]
+      def data2datalog(data)
+        data2array(data).join('] [')
       end
+
+      # formats the provided format string with args.
+      # @param [String] format
+      # @param [Array] args
+      # @return [String]
+      def format(format, *args)
+        format % args
+      end
+
+      # def current_format_str
+      #   current_format[:str]
+      # end
+      #
+      # def current_format_cb
+      #   current_format[:cb]
+      # end
+      #
+      # def current_format_data(data)
+      #   (current_format[:data] ? current_format[:data].(data) : data).to_s.split("\n")
+      # end
 
       def format_datetime(time, short = false)
         if short
@@ -136,16 +171,41 @@ module RubySmart
         end
       end
 
-      def msg2str(msg, join = false)
-        case msg
-        when ::String
-          msg
-        when ::Array
-          join ? msg.join('] [') : msg.inspect
-        when ::Exception
-          "#{ msg.message } (#{ msg.class })\n" + (msg.backtrace || []).join("\n")
+      # returns the formatted string with a new-line.
+      # depends, on the +:nl+ option.
+      # @param [String, Array] data
+      # @return [String]
+      def _nl(data)
+        # convert to string
+        data = data.join("\n") if data.is_a?(Array)
+
+        # check for +nl+ flag
+        return data unless opts[:nl]
+
+        data + "\n"
+      end
+
+      # returns the formatted string with a color-code
+      # depends, on the +:clr+ option.
+      # @param [String] str
+      # @param [String<uppercase>] severity
+      # @return [String]
+      def _clr(str, severity)
+        if opts[:clr] && (clr = SEVERITY_COLORS[severity])
+          str.send(clr)
         else
-          msg.inspect
+          _declr(str)
+        end
+      end
+
+      # de-colorizes provided string
+      # @param [String] str
+      # @return [String]
+      def _declr(str)
+        if opts[:clr]
+          str
+        else
+          str.gsub(/\e\[[\d;]+m/, '')
         end
       end
     end

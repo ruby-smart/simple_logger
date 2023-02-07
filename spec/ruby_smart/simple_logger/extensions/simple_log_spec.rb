@@ -93,5 +93,17 @@ RSpec.describe "SimpleLog extension" do
       @logger.instance_variable_set("@inspector", nil)
       expect(@logger.inspector).to eq :inspect
     end
+
+    it 'resolves from awesome_print' do
+      Object.class_eval do
+        def ai
+          "ok"
+        end
+      end
+
+      @logger.class.inspector = :auto
+      @logger.instance_variable_set("@inspector", nil)
+      expect(@logger.inspector).to eq :ai
+    end
   end
 end

@@ -20,6 +20,12 @@ module RubySmart
             m
           end
         end
+
+        # returns a hash with total amounts per logged type (key)
+        # @return [Hash]
+        def log_stats
+          logs_to_h.reduce({}) { |m, (sev, logs)| m[sev] = logs.count; m }
+        end
       end
     end
   end

@@ -8,6 +8,10 @@ module RubySmart
         attr_reader :devices
         attr_reader :status
 
+        def self.register(*args)
+          new.register(*args)
+        end
+
         def initialize
           @devices = []
           @status  = true

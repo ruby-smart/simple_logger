@@ -13,23 +13,22 @@ module RubySmart
 
         # prepare builtin defaults
         # @param [Hash] opts
-        def _opts_builtin(opts)
-          builtin = opts.delete(:builtin)
+        # @param [Object] builtin
+        def _opts_builtin(opts, builtin = nil)
+          builtin ||= opts.delete(:builtin)
 
           case builtin
           when nil
             # device is nil - resolve optimal device
-            opts[:device] ||= if ::ThreadInfo.stdout?
-                                # colorize output
-                                opts[:clr] = true if opts[:clr].nil?
-
-                                STDOUT
-                              elsif ::ThreadInfo.rails? && ::Rails.logger
-                                ::RubySmart::SimpleLogger::Devices::MultiDevice.new.register(::Rails.logger.instance_variable_get(:@logdev).dev)
-                              else
-                                ::RubySmart::SimpleLogger::Devices::MemoryDevice.new
-                              end
+            if ::ThreadInfo.stdout?
+              _opts_builtin(opts, :stdout)
+            elsif ::ThreadInfo.rails? && ::Rails.logger
+              _opts_builtin(opts, :rails)
+            else
+              _opts_builtin(opts, :memory)
+            end
           when :stdout
+            # set device ONLY if unset in opts
             opts[:device] ||= STDOUT
             # colorize output
             opts[:clr]    = true if opts[:clr].nil?
@@ -38,30 +37,60 @@ module RubySmart
             # colorize output
             opts[:clr]    = true if opts[:clr].nil?
           when :rails
-            opts[:device] ||= ::RubySmart::SimpleLogger::Devices::MultiDevice.new.register(::Rails.logger.instance_variable_get(:@logdev).dev)
+            # set device ONLY if unset in opts
+            opts[:device] ||= ::RubySmart::SimpleLogger::Devices::MultiDevice.register(::Rails.logger.instance_variable_get(:@logdev).dev)
           when :proc
             # auto sets related opts for proc device
             opts[:payload] = false
+            opts[:nl]      = false
             opts[:format]  ||= :passthrough
 
-            # force set device
+            # set device ONLY if unset in opts
             opts[:device] ||= ::RubySmart::SimpleLogger::Devices::ProcDevice.new(opts[:proc])
           when :memory
             # auto sets related opts for memory device
             opts[:payload] = false
 
-            # set device
+            # set device ONLY if unset in opts
             opts[:device] ||= if opts[:stdout]
-                                # IMPORTANT: There will be a 'default' formatter created, which will passthrough all data to the device
-                                opts[:format] ||= :passthrough
+                                # store original format
+                                stdout_format = opts[:format] || :plain
+
+                                # force 'passthrough', as format, since this is required for multi-devices
+                                opts[:format] = :passthrough
 
                                 # special case handling to additionally stdout logs
-                                ::RubySmart::SimpleLogger::Devices::MultiDevice.new.
-                                  register(::RubySmart::SimpleLogger::Devices::MemoryDevice.new, ::RubySmart::SimpleLogger::Formatter.new(format: :memory, nl: false)).
-                                  register(STDOUT, ::RubySmart::SimpleLogger::Formatter.new(format: :default, nl: true, clr: (opts[:clr] != nil)))
+                                ::RubySmart::SimpleLogger::Devices::MultiDevice.new
+                                                                               .register(::RubySmart::SimpleLogger::Devices::MemoryDevice.new, ::RubySmart::SimpleLogger::Formatter.new(format: :memory))
+                                                                               .register(STDOUT, ::RubySmart::SimpleLogger::Formatter.new(format: stdout_format, nl: _nl(opts), clr: opts[:clr]))
                               else
                                 opts[:format] ||= :memory
                                 ::RubySmart::SimpleLogger::Devices::MemoryDevice.new
+                              end
+          when Module
+            # set device ONLY if unset in opts
+            opts[:device] ||= if opts[:stdout]
+                                # store original format
+                                device_format = opts[:format] || :plain
+
+                                # force 'passthrough', as format, since this is required for multi-devices
+                                opts[:format] = :passthrough
+
+                                # colorize output
+                                opts[:clr]    = true if opts[:clr].nil?
+
+                                # special case handling to additionally stdout logs
+                                ::RubySmart::SimpleLogger::Devices::MultiDevice.register(
+                                  ::Logger::LogDevice.new(_logdev(builtin),
+                                                          shift_age:           opts[:shift_age] || 0,
+                                                          shift_size:          opts[:shift_size] || 1048576,
+                                                          shift_period_suffix: opts[:shift_period_suffix],
+                                                          binmode:             opts[:binmode]),
+                                  ::RubySmart::SimpleLogger::Formatter.new(format: device_format, nl: _nl(opts), clr: false)
+                                )
+                                                                               .register(STDOUT, ::RubySmart::SimpleLogger::Formatter.new(format: device_format, nl: _nl(opts), clr: opts[:clr]))
+                              else
+                                builtin
                               end
           else
             # forward provided device ONLY if unset in opts
@@ -141,23 +170,34 @@ module RubySmart
           # clean & rewrite level (possible symbols) to real level
           opts[:level] = _level(opts[:level] || :debug)
 
+          # clean & rewrite nl
+          opts[:nl] = _nl(opts)
+
+          # rewrite format
+          opts[:format] ||= :plain
+
           # provide custom formatter and forward special opts (format, nl, clr)
-          opts[:formatter] ||= ::RubySmart::SimpleLogger::Formatter.new({ format: :plain, nl: false, clr: false }.merge(opts.slice(:format, :nl, :clr)))
+          opts[:formatter] ||= ::RubySmart::SimpleLogger::Formatter.new(opts)
 
           # ignore payload and send data directly to the logdev
           @ignore_payload  = true if opts[:payload].is_a?(FalseClass)
 
-          # set the inspector to be used for data inspection
-          @inspector = opts[:inspector]
-
-          # disable inspector
-          @inspector = :to_s if opts[:inspect] == false
-
-          # # build logdev
-          # opts[:logdev] = _logdev(opts[:device])
+          # set the inspector to be used for data inspection.
+          # 'disable' inspector, if false was provided - which simply results in +#to_s+
+          @inspector = (opts[:inspect] === false) ? :to_s : opts[:inspector]
 
           # simple return opts
           opts
+        end
+
+        # returns the +nl+ (new line) flag, depending on the provided options.
+        # recognizes +:nl+ and +:payload+ options.
+        # @param [Hash] opts
+        # @return [Boolean]
+        def _nl(opts)
+          return opts[:nl] unless opts[:nl].nil?
+
+          opts[:payload].is_a?(FalseClass)
         end
 
         # merge all provided hashes into one single hash

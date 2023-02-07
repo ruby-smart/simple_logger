@@ -5,7 +5,7 @@ require 'spec_helper'
 RSpec.describe RubySmart::SimpleLogger::Scenes do
   before :all do
     # forces inspector to ruby's default 'inspect' method
-    @logger     = RubySmart::SimpleLogger.new RubySmart::SimpleLogger::Devices::MemoryDevice.new, format: :plain, nl: false, inspector: :inspect
+    @logger     = RubySmart::SimpleLogger.new RubySmart::SimpleLogger::Devices::MemoryDevice.new, format: :plain, nl: false, clr: true, inspector: :inspect
     @log_result = []
   end
 
@@ -265,6 +265,59 @@ RSpec.describe RubySmart::SimpleLogger::Scenes do
           res << "- \e[1;36mstep 3                                          \e[0m [100%] \e[1;32m=================================================>\e[0m\e[1;31m\e[0m\n"
         end
       }.to change { @log_result }
+    end
+  end
+
+  describe 'processed methods' do
+    before do
+      @logger.instance_variable_set(:@ignore_payload, true)
+      @log_result = []
+      @logger.logdev.dev.clear!
+    end
+
+    after do
+      @logger.instance_variable_set(:@ignore_payload, false)
+    end
+
+    it '#processed lvl 0' do
+      @logger.processed("custom process") do
+        expect {
+          spec_log_result(:success, 'note') do |res|
+            res << "╟ note"
+          end
+        }.to change { @log_result }
+      end
+    end
+
+    it '#processed multiple lvl' do
+      @logger.processed("custom process") do
+        @logger.success("ok")
+
+        @logger.processed("sub-process") do
+          @logger.error("nope")
+          @logger.info("japp")
+          nil
+        end
+
+        @logger.processed("sub-process 2",) do
+          @logger.error("nope")
+          false
+        end
+      end
+
+      logs = @logger.logs.join("\n")
+
+      expect(logs).to eq "╔ START - custom process\n╟ ok\n║ ┌ START - sub-process\n║ ├ nope\n║ ├ japp\n║ └ END   - sub-process \n║ ┌ START - sub-process 2\n║ ├ nope\n║ └ END   - FAILED \n╚ END   - SUCCESS "
+      expect(logs).to_not include("(duration:")
+    end
+
+    it '#processed with timer' do
+      @logger.processed("other process", timer: true) do
+        @logger.success("ok")
+        nil
+      end
+
+      expect(@logger.logs.join).to include("(duration:")
     end
   end
 end

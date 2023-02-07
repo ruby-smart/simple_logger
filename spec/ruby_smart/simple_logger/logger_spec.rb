@@ -7,6 +7,14 @@ RSpec.describe RubySmart::SimpleLogger::Logger do
     @logger = RubySmart::SimpleLogger.new
   end
 
+  describe '#initialize' do
+    it 'initializes with opts' do
+      l = RubySmart::SimpleLogger.new level: :debug, format: :passthrough, clr: false, nl: true
+      expect(l.level).to eq RubySmart::SimpleLogger::Logger::DEBUG
+      expect(l.formatter.instance_variable_get(:@opts)).to eq({clr: false, format: :passthrough, nl: true})
+    end
+  end
+
   describe '#level' do
     it 'should be debug as default' do
       expect(@logger.level).to eq RubySmart::SimpleLogger::Logger::DEBUG

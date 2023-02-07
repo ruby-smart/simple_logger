@@ -15,12 +15,13 @@ module RubySmart
       end
 
       def klass_logger_opts=(opts)
+        clear!
         class_variable_set('@@klass_logger_opts', opts)
       end
 
       # delegate new method to logger
       def new(*args)
-        args = [nil, self.klass_logger_opts] if args.length == 0
+        args = [nil, self.klass_logger_opts.dup] if args.length == 0
         RubySmart::SimpleLogger::Logger.new(*args)
       end
 

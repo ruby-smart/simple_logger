@@ -37,4 +37,14 @@ RSpec.describe "Logs extension" do
       expect(logger2.logs_to_h).to eq({})
     end
   end
+
+  describe '#log_stats' do
+    it 'returns stats hash' do
+      @logger.info "start"
+      @logger.error "not allowed"
+      @logger.info "done"
+
+      expect(@logger.log_stats).to eq({info: 2, error: 1})
+    end
+  end
 end

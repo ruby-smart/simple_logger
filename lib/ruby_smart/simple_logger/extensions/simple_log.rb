@@ -53,7 +53,7 @@ module RubySmart
               # prevent logging nil data
               return false if data.nil?
 
-              add level, data
+              add level, _pcd(data, opts)
               return true
             end
 
@@ -207,7 +207,7 @@ module RubySmart
             txt            = str.dup
 
             # SPECIAL: prevent subject being parsed longer as the mask#length
-            opts[:subject] = opts[:subject][0, (mask[:length] - 4 - mask[:char].length * 2)] if opts[:subject] && mask[:length] && opts[:subject].length > mask[:length]
+            opts[:subject] = opts[:subject].to_s[0, (mask[:length] - 4 - mask[:char].length * 2)] if opts[:subject] && mask[:length] && opts[:subject].to_s.length > mask[:length]
 
             str.scan(/%\{(\w+)\}/) do |mm|
               next unless mm.length > 0 && mm[0]

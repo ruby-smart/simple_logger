@@ -7,7 +7,7 @@ RSpec.describe RubySmart::SimpleLogger::Devices::MultiDevice do
     @receiver1 = RubySmart::SimpleLogger::Devices::MemoryDevice.new
     @receiver2 = RubySmart::SimpleLogger::Devices::MemoryDevice.new
     @receiver3 = RubySmart::SimpleLogger::Devices::MemoryDevice.new
-    @dev = RubySmart::SimpleLogger::Devices::MultiDevice.new.
+    @dev = RubySmart::SimpleLogger::Devices::MultiDevice.
       register(@receiver1).
       register(@receiver2, RubySmart::SimpleLogger::Formatter.new(format: :datalog)).
       register(@receiver3, RubySmart::SimpleLogger::Formatter.new(format: :plain))
@@ -26,8 +26,8 @@ RSpec.describe RubySmart::SimpleLogger::Devices::MultiDevice do
         @dev.write ['ERROR', time, nil, 'some data']
       }.to change(@receiver1.logs, :count)
       expect(@receiver1.logs[-1]).to eq ['ERROR', time, nil, 'some data']
-      expect(@receiver2.logs[-1]).to eq "[  ERROR] [2021-11-25 23:00:47] [##{$$}] [some data]\n"
-      expect(@receiver3.logs[-1]).to eq 'some data'
+      expect(@receiver2.logs[-1]).to eq "[##{$$}] [2021-11-25 23:00:47] [ERROR] [some data]\n"
+      expect(@receiver3.logs[-1]).to eq "some data\n"
     end
 
     it 'blocks on closed' do

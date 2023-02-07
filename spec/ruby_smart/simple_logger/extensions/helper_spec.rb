@@ -7,7 +7,7 @@ RSpec.describe "Helper extension" do
     @logger = RubySmart::SimpleLogger.new
   end
 
-  describe '#_opts_builtins' do
+  describe '#_opts_builtin' do
     describe 'nil' do
       it 'uses optimal device' do
         expect(@logger.logdev).to be
@@ -39,17 +39,12 @@ RSpec.describe "Helper extension" do
         expect(logger.ignore_payload?).to eq true
       end
 
-      it 'uses multidevice with stdout' do
+      it 'uses MultiDevice with stdout' do
         logger = RubySmart::SimpleLogger.new :memory, stdout: true
 
         expect(logger.formatter.opts[:format]).to eq :passthrough
         expect(logger.logdev.dev).to be_a RubySmart::SimpleLogger::Devices::MultiDevice
         expect(logger.ignore_payload?).to eq true
-      end
-
-      it 'can use provided device' do
-        logger = RubySmart::SimpleLogger.new :memory, device: STDOUT
-        expect(logger.logdev.dev).to eq STDOUT
       end
     end
 
@@ -57,6 +52,22 @@ RSpec.describe "Helper extension" do
       it 'forwards provided device' do
         logger = RubySmart::SimpleLogger.new STDOUT
         expect(logger.logdev.dev).to eq STDOUT
+      end
+
+      it 'uses STDERR' do
+        logger = RubySmart::SimpleLogger.new :stderr
+        expect(logger.logdev.dev).to eq STDERR
+      end
+
+      it 'uses module' do
+        logger = RubySmart::SimpleLogger.new RubySmart::SimpleLogger, stdout: true
+        expect(logger.formatter.opts[:format]).to eq :passthrough
+        expect(logger.logdev.dev).to be_a RubySmart::SimpleLogger::Devices::MultiDevice
+
+        logger = RubySmart::SimpleLogger.new RubySmart::SimpleLogger
+        expect(logger.formatter.opts[:format]).to eq :plain
+        expect(logger.logdev.dev).to be_a ::File
+        expect(logger.logdev.dev.path).to eq 'log/ruby_smart/simple_logger.log'
       end
     end
   end

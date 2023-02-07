@@ -3,6 +3,7 @@
 require_relative 'extensions/helper'
 require_relative 'extensions/logs'
 require_relative 'extensions/mask'
+require_relative 'extensions/processed'
 require_relative 'extensions/scene'
 require_relative 'extensions/severity'
 require_relative 'extensions/simple_log'
@@ -25,6 +26,7 @@ module RubySmart
       include Extensions::Helper
       include Extensions::Logs
       include Extensions::Mask
+      include Extensions::Processed
       include Extensions::Scene
       include Extensions::Severity
       include Extensions::SimpleLog
@@ -36,7 +38,7 @@ module RubySmart
       attr_reader :logdev
 
       # defines a uniq key to parse the data
-      PAYLOAD_DATA_KEY = :_data
+      PAYLOAD_DATA_KEY = :__data__
 
       # initialize new Logger
       # @param [Object, Symbol, nil] builtin

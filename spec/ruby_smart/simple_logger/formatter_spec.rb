@@ -17,7 +17,7 @@ RSpec.describe RubySmart::SimpleLogger::Formatter do
   describe '#formats' do
     it 'returns class formats' do
       expect(@formatter.formats).to be_a Hash
-      expect(@formatter.formats.values[0].keys).to eq [:str, :cb]
+      expect(@formatter.formats.values[0]).to be_a Proc
     end
   end
 
@@ -34,45 +34,44 @@ RSpec.describe RubySmart::SimpleLogger::Formatter do
     end
 
     it 'resets current_format' do
-      format = @formatter.send(:current_format)
-      expect(@formatter.send(:current_format)).to be format
+      format = @formatter.send(:current_formatter)
+      expect(@formatter.send(:current_formatter)).to be format
 
       @formatter.opts(format: :plain)
-      expect(@formatter.send(:current_format)).to_not be format
+      expect(@formatter.send(:current_formatter)).to_not be format
     end
   end
 
   describe '#clear!' do
     it 'resets current_format' do
-      @formatter.send(:current_format)
-      expect(@formatter.instance_variable_get(:@current_format)).to be
+      @formatter.send(:current_formatter)
+      expect(@formatter.instance_variable_get(:@current_formatter)).to be
 
       @formatter.clear!
-      expect(@formatter.instance_variable_get(:@current_format)).to_not be
+      expect(@formatter.instance_variable_get(:@current_formatter)).to_not be
     end
   end
 
-  describe '#current_format_cb' do
-    it 'returns current_format cb' do
-      expect(@formatter.send(:current_format_cb)).to be_a Proc
+  describe '#data2array' do
+    it 'always returns an array' do
+      expect(@formatter.send(:data2array, nil)).to be_a Array
+      expect(@formatter.send(:data2array, [])).to be_a Array
+      expect(@formatter.send(:data2array, '')).to be_a Array
     end
 
-    it 'sets current_format' do
-      expect(@formatter.instance_variable_get(:@current_format)).to be_nil
-      @formatter.send(:current_format_cb)
-      expect(@formatter.instance_variable_get(:@current_format)).to be
+    it 'transforms array' do
+      expect(@formatter.send(:data2array,[{a: ['nested', 'data']}])).to eq ["{:a=>[\"nested\", \"data\"]}"]
+      expect(@formatter.send(:data2array,["some text with \nline breaks", "other text with\nline breaks"])).to eq ["some text with ", "line breaks", "other text with", "line breaks"]
+    end
+
+    it 'converts exception array' do
+      expect(@formatter.send(:data2array, Exception.new('no methods available'))).to eq ["exception: Exception","no methods available"]
     end
   end
 
-  describe '#current_format_str' do
-    it 'returns current_format str' do
-      expect(@formatter.send(:current_format_str)).to be_a String
-    end
-
-    it 'sets current_format' do
-      expect(@formatter.instance_variable_get(:@current_format)).to be_nil
-      @formatter.send(:current_format_str)
-      expect(@formatter.instance_variable_get(:@current_format)).to be
+  describe '#format' do
+    it 'formats args' do
+      expect(@formatter.send(:format, '%s - special format %s', 'a','b')).to eq 'a - special format b'
     end
   end
 
@@ -86,25 +85,21 @@ RSpec.describe RubySmart::SimpleLogger::Formatter do
     end
   end
 
-  describe '#msg2str' do
+  describe '#data2datalog' do
     it 'converts string' do
-      expect(@formatter.send(:msg2str, 'str')).to eq 'str'
-    end
-
-    it 'converts array' do
-      expect(@formatter.send(:msg2str, ['str','with','what'])).to eq '["str", "with", "what"]'
+      expect(@formatter.send(:data2datalog, 'str')).to eq 'str'
     end
 
     it 'joins array' do
-      expect(@formatter.send(:msg2str, ['str','with','what'], true)).to eq 'str] [with] [what'
+      expect(@formatter.send(:data2datalog, ['str','with','what'])).to eq "str] [with] [what"
     end
 
     it 'converts exception array' do
-      expect(@formatter.send(:msg2str, Exception.new('no methods available'))).to eq "no methods available (Exception)\n"
+      expect(@formatter.send(:data2datalog, Exception.new('no methods available'))).to eq "exception: Exception] [no methods available"
     end
 
     it 'inspects others' do
-      expect(@formatter.send(:msg2str, ::RubySmart::SimpleLogger)).to eq "RubySmart::SimpleLogger"
+      expect(@formatter.send(:data2datalog, ::RubySmart::SimpleLogger)).to eq "RubySmart::SimpleLogger"
     end
   end
 
@@ -121,8 +116,8 @@ RSpec.describe RubySmart::SimpleLogger::Formatter do
     it 'formats plain' do
       @formatter.opts(nl: false, format: :plain)
       expect(@formatter.('SUCCESS', @dt, nil, 'At vero')).to eq "At vero"
-      expect(@formatter.('WARN', @dt, nil, {a: 1, b: '2', c: :_3})).to eq({a: 1, b: '2', c: :_3})
-      expect(@formatter.('WARN', @dt, nil, RubySmart::SimpleLogger::Formatter.new)).to be_a RubySmart::SimpleLogger::Formatter
+      expect(@formatter.('WARN', @dt, nil, {a: 1, b: '2', c: :_3})).to eq("{:a=>1, :b=>\"2\", :c=>:_3}")
+      expect(@formatter.('WARN', @dt, nil, RubySmart::SimpleLogger::Formatter.new)).to include 'RubySmart::SimpleLogger::Formatter'
     end
 
     it 'formats passthrough' do
@@ -139,9 +134,49 @@ RSpec.describe RubySmart::SimpleLogger::Formatter do
 
     it 'formats datalog' do
       @formatter.opts(format: :datalog)
-      expect(@formatter.('SUCCESS', @dt, nil, 'At vero')).to eq "[SUCCESS] [2021-11-21 12:10:39] [##{$$}] [At vero]\n"
+      expect(@formatter.('SUCCESS', @dt, nil, 'At vero')).to eq "[##{$$}] [2021-11-21 12:10:39] [SUCCESS] [At vero]\n"
       @formatter.opts(nl: false)
-      expect(@formatter.('WARN', @dt, nil, ['str','with','what'])).to eq "[   WARN] [2021-11-21 12:10:39] [##{$$}] [str] [with] [what]"
+      expect(@formatter.('WARN', @dt, nil, ['str','with','what'])).to eq "[##{$$}] [2021-11-21 12:10:39] [WARN] [str] [with] [what]"
+    end
+  end
+
+  describe '#_nl' do
+    it 'returns with newline' do
+      f = RubySmart::SimpleLogger::Formatter.new nl: true, format: :plain
+      expect(f.('SUCCESS', @dt, nil, 'A text with auto-newline')).to eq "A text with auto-newline\n"
+    end
+
+    it 'returns without newline' do
+      f = RubySmart::SimpleLogger::Formatter.new nl: false, format: :plain
+      expect(f.('SUCCESS', @dt, nil, 'A text with auto-newline')).to eq "A text with auto-newline"
+    end
+  end
+
+  describe '#_clr' do
+    it 'returns colorized text' do
+      f = RubySmart::SimpleLogger::Formatter.new clr: true, format: :plain
+      expect(f.send(:_clr, 'Some text'.purple, 'SUCCESS')).to eq "\e[1;32m\e[1;35mSome text\e[0m\e[0m"
+      expect(f.send(:_clr, 'Some text', 'ERROR')).to eq "\e[1;31mSome text\e[0m"
+    end
+
+    it 'returns decolorized text' do
+      f = RubySmart::SimpleLogger::Formatter.new clr: false, format: :plain
+      expect(f.send(:_clr, 'Some text'.purple, 'SUCCESS')).to eq "Some text"
+      expect(f.send(:_clr, 'Some text', 'ERROR')).to eq "Some text"
+    end
+  end
+
+  describe '#_declr' do
+    it 'returns colorized text' do
+      f = RubySmart::SimpleLogger::Formatter.new clr: true, format: :plain
+      expect(f.send(:_declr, 'Some text'.purple)).to eq "\e[1;35mSome text\e[0m"
+      expect(f.send(:_declr, 'Some text')).to eq "Some text"
+    end
+
+    it 'returns decolorized text' do
+      f = RubySmart::SimpleLogger::Formatter.new clr: false, format: :plain
+      expect(f.send(:_declr, 'Some text'.purple)).to eq "Some text"
+      expect(f.send(:_declr, 'Some text')).to eq "Some text"
     end
   end
 end

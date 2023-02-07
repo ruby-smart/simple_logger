@@ -12,6 +12,9 @@ GemInfo.safe_require 'awesome_print'
 class Debugger
   extend ::RubySmart::SimpleLogger::KlassLogger
 
+  # force debugger to 'DEBUG' severity
+  self.klass_logger_opts = {level: ::RubySmart::SimpleLogger::Logger::DEBUG}
+
   # overwrite existing "debug" method (if Debase was loaded)
   def self.debug(*args)
     return false if args.none?

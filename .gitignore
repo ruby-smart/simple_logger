@@ -6,6 +6,7 @@ Gemfile.lock
 # testing
 .rspec_status
 /spec/reports/
+/log
 
 # documentation & coverage
 /.yardoc

@@ -1,5 +1,15 @@
 # RubySmart::SimpleLogger - CHANGELOG
 
+## [1.1.0] - 2023-02-07
+* **[add]** `#processed` method for logger
+* **[ref]** `Debugger` to enforce a 'DEBUG' severity
+* **[ref]** `RubySmart::SimpleLogger::Formatter` with simplified formats
+* **[ref]** 'default' format to only 
+* **[ref]** builtin for 'modules' to directly work with 'stdout' option
+* **[ref]** handling of logger-newlines 'nl'-option
+* **[fix]** 'inspector' detection
+* **[fix]** `RubySmart::SimpleLogger::KlassLogger.new` not 'dup' klass_logger_opts (now prevents reference manipulation)
+
 ## [1.0.0] - 2023-01-29
 * **[add]** full documentation
 * **[add]** add colors, if gem `awesome_print` ist missing

@@ -22,6 +22,8 @@ def spec_log_result(method, *args, &block)
   elsif Object.respond_to?(:ap)
     ap res
   else
+    puts "FAILED - DEBUGGING:"
+    puts ary.join
     puts res.inspect
   end
 

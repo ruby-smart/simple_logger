@@ -4,7 +4,7 @@
 [![Documentation](https://img.shields.io/badge/docs-rdoc.info-blue.svg)](http://rubydoc.info/gems/ruby_smart-simple_logger)
 
 [![Gem Version](https://badge.fury.io/rb/ruby_smart-simple_logger.svg?kill_cache=1)](https://badge.fury.io/rb/ruby_smart-simple_logger)
-[![License](https://img.shields.io/github/license/ruby-smart/simple_logger)](docs/LICENSE.txt)
+[![License](https://img.shields.io/badge/license-MIT-green)](docs/LICENSE.txt)
 
 [![Coverage Status](https://coveralls.io/repos/github/ruby-smart/simple_logger/badge.svg?branch=main&kill_cache=1)](https://coveralls.io/github/ruby-smart/simple_logger?branch=main)
 [![Tests](https://github.com/ruby-smart/simple_logger/actions/workflows/ruby.yml/badge.svg)](https://github.com/ruby-smart/simple_logger/actions/workflows/ruby.yml)
@@ -147,7 +147,7 @@ MyCustomLogger.info "Very nice here"
 # => creates a logfile @ log/my_app/tasks/special_task.log
 ```
 
-This is already done for the `SimpleLogger` module - so you can directly access the methods:
+This is already done for the `SimpleLogger` _(or `Debugger`)_ module - so you can directly access the methods:
 ```ruby
 require 'simple_logger'
 
@@ -169,6 +169,14 @@ other_logger.debug "some other debug in memory only ..."
 # create new logger, but don't use 'klass_logger_opts' - instead pipe to the rails logger
 other_logger2 = SimpleLogger.new :rails
 other_logger2.info "directly logs to the rails logger"
+```
+
+Alternatives with 'Debugger':
+```ruby
+require 'debugger'
+
+Debugger.debug "some debug"
+Debugger.error "that failed ..."
 ```
 
 -----
@@ -294,7 +302,7 @@ noformat_logger.debug "some debug without color and mask - uses the default form
 
 ### Module Builtin
 
-Providing a ```Module``` will also create and write to a new logfile.
+Providing a ```module``` will also create and write to a new logfile.
 The path depends on the provided module name.
 
 **Example:**
@@ -335,7 +343,9 @@ logger.debug "debug message"
 ### passthrough Format
 
 The **passthrough** format is mostly used to just 'passthrough' all args to the device _(proc, memory, file, etc.)_ without formatting anything.
-This will just provide an array of args.
+This will simply provide an array of args.
+
+_Using this format will prevent **newlines** and does not recognize the `:nl` / `:clr` option._
 
 ```ruby
 logger = ::SimpleLogger.new(:stdout, format: :passthrough, payload: false)
@@ -348,6 +358,8 @@ logger.debug "debug message"
 
 The **plain** format is only used to forward the provided **data**, without severity, time, etc.
 This is the default behaviour of the SimpleLogger - which is used to build `scene`, masks, ...
+
+_Using this format will prevent **newlines** and does not recognize the `:nl` / `:clr` option._
 
 ```ruby
 logger = ::SimpleLogger.new(:stdout, format: :plain, payload: false)
@@ -367,6 +379,8 @@ payload_logger.debug "debug message"
 ### memory Format
 
 The **memory** format is only used by the memory-device to store severity, time & data as an array.
+
+_Using this format will prevent **newlines** and does not recognize the `:nl` / `:clr` option._
 
 ```ruby
 logger = ::SimpleLogger.new(:stdout, format: :memory, payload: false)
@@ -419,7 +433,7 @@ logger = ::SimpleLogger.new(payload: false)
 logger = ::SimpleLogger.new(:stdout, payload: false)
 ```
 
-### format _(for default formatter ONLY)_
+### format
 
 Provide a other format.
 Possible values: ```:default, :passthrough, :plain, :memory, :datalog```
@@ -428,7 +442,7 @@ logger = ::SimpleLogger.new(format: :default)
 logger = ::SimpleLogger.new(:memory, format: :passthrough)
 ```
 
-### nl _(for default formatter ONLY)_
+### nl
 
 Enable / disable NewLine for formatter.
 ```ruby
@@ -445,7 +459,7 @@ Provide a callback for the ```:proc``` builtin.
 logger = ::SimpleLogger.new(:proc, proc: lambda{|data| ... })
 ```
 
-### stdout _(:memory-builtin ONLY)_
+### stdout _(:memory & Module-builtin ONLY)_
 
 Enable STDOUT as MultiDevice for the memory builtin.
 ```ruby
@@ -454,8 +468,8 @@ logger = ::SimpleLogger.new(:memory, stdout: true)
 # same as above
 logger = ::SimpleLogger.new(
   ::SimpleLogger::Devices::MultiDevice.new.
-    register(::SimpleLogger::Devices::MemoryDevice.new, ::SimpleLogger::Formatter.new(format: :memory, nl: false)).
-    register(STDOUT, ::SimpleLogger::Formatter.new(format: :default, nl: true, clr: (opts[:clr] != nil)))
+    register(::SimpleLogger::Devices::MemoryDevice.new, ::SimpleLogger::Formatter.new(format: :memory)).
+    register(STDOUT, ::SimpleLogger::Formatter.new(format: :default, nl: true, clr: opts[:clr]))
 )
 ```
 
@@ -489,24 +503,6 @@ logger.info "info text"
 Provide a custom formatter instance.
 ```ruby
 logger = ::SimpleLogger.new(formatter: My::Custom::Formatter.new)
-```
-
-### clr
-
-Disable color for payload and formatter.
-
-```ruby
-logger = ::SimpleLogger.new(clr: false)
-```
-
-### payload
-
-Disable payload _(mask & scenes)_ for logger
-
-```ruby
-logger = ::SimpleLogger.new(payload: false)
-logger.debug "some debug without payload"
-# some debug without payload
 ```
 
 ### inspect
@@ -709,6 +705,51 @@ The following PRE-defined scenes are available. _(You can define your own scenes
 #
 #     ________________________________________________ <- 48 chars
 #                                                 50 chars -> __________________________________________________
+```
+
+### processed(name, opts)
+```ruby
+require 'simple_logger'
+l = SimpleLogger.new(:stdout, payload: false)
+
+l.processed("Process Alpha", timer: true) do
+  l.info "find files"
+  l.info "found 34 files"
+  
+  l.processed("extracting ...", timer: true) do
+    l.info "10% done"
+    l.info "20% done"
+    l.info "100% done"
+    
+    # returns true to the processed state
+    true
+  end
+
+  l.processed("transforming ...") do
+    l.error "bad memory"
+    l.info "rolling back"
+    # returns false to the processed state
+    false
+  end
+
+  # returns nil to the processed state
+  nil
+end
+
+
+# ╔ START - Process Alpha
+# ╟ find files
+# ╟ found 34 files
+# ║ ┌ START - extracting ...
+# ║ ├ 10% done
+# ║ ├ 20% done
+# ║ ├ 100% done
+# ║ └ END   - SUCCESS (duration: 0.000267545)
+# ║ ┌ START - transforming ...
+# ║ ├ bad memory
+# ║ ├ rolling back
+# ║ └ END   - FAILED
+# ╚ END   - Process Alpha (duration: 0.001040807)
 ```
 
 ### _other useful methods_
