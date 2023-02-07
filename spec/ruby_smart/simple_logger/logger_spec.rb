@@ -47,7 +47,7 @@ RSpec.describe RubySmart::SimpleLogger::Logger do
     end
 
     it 'uses plain as default' do
-      expect(@logger.formatter.opts[:format]).to eq :plain
+      expect(RubySmart::SimpleLogger.new('custom.log').formatter.opts[:format]).to eq :plain
     end
   end
 
