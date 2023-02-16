@@ -5,12 +5,12 @@ require 'spec_helper'
 RSpec.describe RubySmart::SimpleLogger::Formatter do
   before do
     @formatter = RubySmart::SimpleLogger::Formatter.new
-    @dt = DateTime.parse('2021-11-21 12:10:39')
+    @dt        = DateTime.parse('2021-11-21 12:10:39')
   end
 
   describe 'defaults' do
     it 'has' do
-      expect(@formatter.opts).to eq({nl: true, format: :default})
+      expect(@formatter.opts).to eq({ nl: true, format: :default })
     end
   end
 
@@ -27,10 +27,10 @@ RSpec.describe RubySmart::SimpleLogger::Formatter do
     end
 
     it 'merges opts' do
-      expect(@formatter.opts).to eq({nl: true, format: :default})
+      expect(@formatter.opts).to eq({ :format => :default, :nl => true })
 
       @formatter.opts(nl: false)
-      expect(@formatter.opts).to eq({nl: false, format: :default})
+      expect(@formatter.opts).to eq({ :format => :default, :nl => false })
     end
 
     it 'resets current_format' do
@@ -60,18 +60,18 @@ RSpec.describe RubySmart::SimpleLogger::Formatter do
     end
 
     it 'transforms array' do
-      expect(@formatter.send(:data2array,[{a: ['nested', 'data']}])).to eq ["{:a=>[\"nested\", \"data\"]}"]
-      expect(@formatter.send(:data2array,["some text with \nline breaks", "other text with\nline breaks"])).to eq ["some text with ", "line breaks", "other text with", "line breaks"]
+      expect(@formatter.send(:data2array, [{ a: ['nested', 'data'] }])).to eq ["{:a=>[\"nested\", \"data\"]}"]
+      expect(@formatter.send(:data2array, ["some text with \nline breaks", "other text with\nline breaks"])).to eq ["some text with ", "line breaks", "other text with", "line breaks"]
     end
 
     it 'converts exception array' do
-      expect(@formatter.send(:data2array, Exception.new('no methods available'))).to eq ["exception: Exception","no methods available"]
+      expect(@formatter.send(:data2array, Exception.new('no methods available'))).to eq ["exception: Exception", "no methods available"]
     end
   end
 
   describe '#format' do
     it 'formats args' do
-      expect(@formatter.send(:format, '%s - special format %s', 'a','b')).to eq 'a - special format b'
+      expect(@formatter.send(:format, '%s - special format %s', 'a', 'b')).to eq 'a - special format b'
     end
   end
 
@@ -91,7 +91,7 @@ RSpec.describe RubySmart::SimpleLogger::Formatter do
     end
 
     it 'joins array' do
-      expect(@formatter.send(:data2datalog, ['str','with','what'])).to eq "str] [with] [what"
+      expect(@formatter.send(:data2datalog, ['str', 'with', 'what'])).to eq "str] [with] [what"
     end
 
     it 'converts exception array' do
@@ -116,27 +116,27 @@ RSpec.describe RubySmart::SimpleLogger::Formatter do
     it 'formats plain' do
       @formatter.opts(nl: false, format: :plain)
       expect(@formatter.('SUCCESS', @dt, nil, 'At vero')).to eq "At vero"
-      expect(@formatter.('WARN', @dt, nil, {a: 1, b: '2', c: :_3})).to eq("{:a=>1, :b=>\"2\", :c=>:_3}")
+      expect(@formatter.('WARN', @dt, nil, { a: 1, b: '2', c: :_3 })).to eq("{:a=>1, :b=>\"2\", :c=>:_3}")
       expect(@formatter.('WARN', @dt, nil, RubySmart::SimpleLogger::Formatter.new)).to include 'RubySmart::SimpleLogger::Formatter'
     end
 
     it 'formats passthrough' do
       @formatter.opts(format: :passthrough)
       expect(@formatter.('SUCCESS', @dt, nil, 'At vero')).to eq ['SUCCESS', @dt, nil, 'At vero']
-      expect(@formatter.('WARN', @dt, nil, {a: 1, b: '2', c: :_3})).to eq(['WARN', @dt, nil, {a: 1, b: '2', c: :_3}])
+      expect(@formatter.('WARN', @dt, nil, { a: 1, b: '2', c: :_3 })).to eq(['WARN', @dt, nil, { a: 1, b: '2', c: :_3 }])
     end
 
     it 'formats tmp' do
       @formatter.opts(format: :memory)
       expect(@formatter.('SUCCESS', @dt, nil, 'At vero')).to eq [:success, @dt, 'At vero']
-      expect(@formatter.('WARN', @dt, nil, {a: 1, b: '2', c: :_3})).to eq([:warn, @dt,{a: 1, b: '2', c: :_3}])
+      expect(@formatter.('WARN', @dt, nil, { a: 1, b: '2', c: :_3 })).to eq([:warn, @dt, { a: 1, b: '2', c: :_3 }])
     end
 
     it 'formats datalog' do
       @formatter.opts(format: :datalog)
       expect(@formatter.('SUCCESS', @dt, nil, 'At vero')).to eq "[##{$$}] [2021-11-21 12:10:39] [SUCCESS] [At vero]\n"
       @formatter.opts(nl: false)
-      expect(@formatter.('WARN', @dt, nil, ['str','with','what'])).to eq "[##{$$}] [2021-11-21 12:10:39] [WARN] [str] [with] [what]"
+      expect(@formatter.('WARN', @dt, nil, ['str', 'with', 'what'])).to eq "[##{$$}] [2021-11-21 12:10:39] [WARN] [str] [with] [what]"
     end
   end
 

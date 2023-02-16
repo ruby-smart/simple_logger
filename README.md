@@ -112,6 +112,8 @@ logger = ::SimpleLogger.new
 logger.debug "some debug"
 logger.error "that failed ..."
 
+# ----------------------------------------------------------------------------------------------------------------------
+
 alternative_logger = ::SimpleLogger.new :memory
 alternative_logger.debug "some debug, just in memory logs"
 alternative_logger.error "that failed, also in memory logs..."
@@ -123,6 +125,16 @@ alternative_logger.logs
 # access the logs as grouped hash
 alternative_logger.logs_to_h
 #=> {:debug=>["some debug, just in memory logs"], :error=>["that failed, also in memory logs..."]}
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+multi_logger = ::SimpleLogger.new :memory, :stdout, clr: true, format: :default
+multi_logger.debug "some debug, sent to stdout & memory"
+# > D, [2023-02-15T10:22:45.030758 #13397]   DEBUG -- : some debug, sent to stdout & memory
+
+# access the logs as array
+multi_logger.logs
+# => [[:debug, 2023-02-15T10:22:45 +0200, "some debug, sent to stdout & memory"]]
 ```
 _You can also create a new instance from every klass_logger Object (see below)._
 
@@ -142,7 +154,6 @@ MyCustomLogger.theme "My Theme"
 
 # log directly to a customized logfile - created through the builtin module name
 MyCustomLogger.klass_logger_opts = {builtin: MyApp::Tasks::SpecialTask}
-MyCustomLogger.clear!
 MyCustomLogger.info "Very nice here"
 # => creates a logfile @ log/my_app/tasks/special_task.log
 ```
@@ -156,7 +167,6 @@ SimpleLogger.error "that failed ..."
 
 # resetting options
 SimpleLogger.klass_logger_opts = {builtin: :memory, stdout: false}
-SimpleLogger.clear!
 
 SimpleLogger.debug "some other debug in memory only ..."
 SimpleLogger.logs
@@ -167,13 +177,14 @@ other_logger = SimpleLogger.new
 other_logger.debug "some other debug in memory only ..."
 
 # create new logger, but don't use 'klass_logger_opts' - instead pipe to the rails logger
-other_logger2 = SimpleLogger.new :rails
+other_logger2 = SimpleLogger.new :rails, :stdout
 other_logger2.info "directly logs to the rails logger"
+other_logger2.info "and also to STDOUT"
 ```
 
-Alternatives with 'Debugger':
+Alternatives with already build 'Debugger':
 ```ruby
-require 'debugger'
+require 'ruby_smart-debugger'
 
 Debugger.debug "some debug"
 Debugger.error "that failed ..."
@@ -530,7 +541,7 @@ logger.debug({ a: 1, b: 2 })
 
 ## _defaults_
 
-Logger default options are still available: ```shift_age, shift_size, progname, datetime_format, shift_period_suffix```
+Device default options are still available: ```shift_age, shift_size, progname, datetime_format, shift_period_suffix, binmode```
 
 -----
 
@@ -737,19 +748,19 @@ l.processed("Process Alpha", timer: true) do
 end
 
 
-# ╔ START - Process Alpha
+# ╔ START :: Process Alpha
 # ╟ find files
 # ╟ found 34 files
-# ║ ┌ START - extracting ...
+# ║ ┌ START :: extracting ...
 # ║ ├ 10% done
 # ║ ├ 20% done
 # ║ ├ 100% done
-# ║ └ END   - SUCCESS (duration: 0.000267545)
-# ║ ┌ START - transforming ...
+# ║ └ END [SUCCESS] (duration: 0.000267545)
+# ║ ┌ START :: transforming ...
 # ║ ├ bad memory
 # ║ ├ rolling back
-# ║ └ END   - FAILED
-# ╚ END   - Process Alpha (duration: 0.001040807)
+# ║ └ END [FAILED]
+# ╚ END [Process Alpha] (duration: 0.001040807)
 ```
 
 ### _other useful methods_

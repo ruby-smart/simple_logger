@@ -13,6 +13,17 @@ RSpec.describe RubySmart::SimpleLogger::Logger do
       expect(l.level).to eq RubySmart::SimpleLogger::Logger::DEBUG
       expect(l.formatter.instance_variable_get(:@opts)).to eq({clr: false, format: :passthrough, nl: true})
     end
+
+    it 'initializes with multiple' do
+      l = RubySmart::SimpleLogger.new :memory, :stdout
+      expect(l.logdev).to be_a RubySmart::SimpleLogger::Devices::MultiDevice
+    end
+
+    it 'initializes with multiple & opts' do
+      l = RubySmart::SimpleLogger.new :memory, :stdout, level: :debug, format: :passthrough, clr: false, nl: true
+      expect(l.logdev).to be_a RubySmart::SimpleLogger::Devices::MultiDevice
+      expect(l.formatter.instance_variable_get(:@opts)).to eq({clr: false, format: :passthrough, nl: true})
+    end
   end
 
   describe '#level' do
@@ -54,10 +65,6 @@ RSpec.describe RubySmart::SimpleLogger::Logger do
   describe '#logdev' do
     it 'is accessible' do
       expect(@logger.logdev).to be
-    end
-
-    it 'has a default dev' do
-      expect(@logger.logdev.dev).to be
     end
   end
 

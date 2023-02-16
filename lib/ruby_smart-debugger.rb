@@ -9,7 +9,7 @@ GemInfo.safe_require 'ruby-debug-ide'
 # try to load 'awesome_print', if available
 GemInfo.safe_require 'awesome_print'
 
-class Debugger
+module Debugger
   extend ::RubySmart::SimpleLogger::KlassLogger
 
   # force debugger to 'DEBUG' severity

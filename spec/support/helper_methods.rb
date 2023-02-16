@@ -2,7 +2,7 @@
 
 def spec_log_result(method, *args, &block)
   # clear all logs before
-  @logger.logdev.dev.clear!
+  @logger.logdev.clear!
 
   if args[0] == :_
     @logger.send(method)
@@ -28,5 +28,5 @@ def spec_log_result(method, *args, &block)
   end
 
   # clear all logs after
-  @logger.logdev.dev.clear!
+  @logger.logdev.clear!
 end

@@ -4,7 +4,7 @@ require 'spec_helper'
 
 RSpec.describe "SimpleLog extension" do
   before do
-    @logger = RubySmart::SimpleLogger.new nil, device: RubySmart::SimpleLogger::Devices::MemoryDevice.new
+    @logger = RubySmart::SimpleLogger.new device: RubySmart::SimpleLogger::Devices::MemoryDevice.new
   end
 
   describe '#simple_log' do

@@ -1,5 +1,17 @@
 # RubySmart::SimpleLogger - CHANGELOG
 
+## [1.2.0] - 2023-02-16
+* **[add]** multi-'builtins' support
+* **[ref]** `Logger` initialization - now supports to provide multiple builtins 
+* **[ref]** `Debugger` requirement to 'ruby_smart-debugger' instead of 'debugger'
+* **[ref]** 'processed' scene to be moved to 'debug'-severity
+* **[fix]** some contradictions within the builtins
+* **[fix]** nested 'logdev' relation with `::RubySmart::SimpleLogger::Devices::MultiDevice` devices
+* **[fix]** `::RubySmart::SimpleLogger::KlassLogger` not forwarding optional block to scenes
+* **[fix]** overcomplicated initialization with ruby's logger - now creates it own logdev
+* **[fix]** `Debugger` conflict with `ruby-debug-ide`-gem
+* **[fix]** 'date_helper' initialisation
+
 ## [1.1.1] - 2023-02-07
 * **[fix]** 'ruby 2.6.x' kwargs for `::Logger::LogDevice` messed up with 'binmode'
 

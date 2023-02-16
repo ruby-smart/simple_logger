@@ -284,14 +284,14 @@ module RubySmart
         end
 
         # processed method
-        # log level @ info
+        # log level @ debug
         # prints: a processed output with unicode box-chars (e.g. ║ )
         #
-        # ╔ START job
+        # ╔ START :: job
         # ╟ doing some cool log
         # ╟ doing some extra log
-        # ╚ END job (duration: 4.34223)
-        base.scene :processed, { level: :info } do |name, opts = {}, &block|
+        # ╚ END [job] (duration: 4.34223)
+        base.scene :processed, { level: :debug } do |name, opts = {}, &block|
           # resolve the current process-level
           lvl = processed_lvl(:up)
 
@@ -300,18 +300,18 @@ module RubySmart
             self.timer(:start, timer_key) if timer_key
           end
 
-          self.log("START - #{name}", _scene_opt(:processed, { pcd: :start }))
+          self.log("START :: #{name}", _scene_opt(:processed, opts, { pcd: :start }))
 
           end_str = case block.call
                     when true
-                      "END   - SUCCESS"
+                      'SUCCESS'
                     when false
-                      "END   - FAILED"
+                      'FAILED'
                     else
-                      "END   - #{name}"
+                      name
                     end
 
-          self.log("#{end_str} #{(timer_key ? "(duration: #{self.timer(:clear, timer_key, :humanized => true)})" : '')}", _scene_opt(:processed, { pcd: :end }))
+          self.log("END [#{end_str}] #{(timer_key ? "(duration: #{self.timer(:clear, timer_key, humanized: true)})" : '')}", _scene_opt(:processed, opts, { pcd: :end }))
 
           processed_lvl(:down)
 

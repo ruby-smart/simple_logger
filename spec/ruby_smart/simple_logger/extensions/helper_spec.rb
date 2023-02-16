@@ -11,7 +11,7 @@ RSpec.describe "Helper extension" do
     describe 'nil' do
       it 'uses optimal device' do
         expect(@logger.logdev).to be
-        expect(@logger.logdev.dev).to_not be_nil
+        expect(@logger.logdev).to_not be_nil
       end
     end
 
@@ -22,7 +22,7 @@ RSpec.describe "Helper extension" do
         expect(logger.formatter.opts[:format]).to eq :passthrough
         expect(logger.formatter.opts[:nl]).to eq false
         expect(logger.ignore_payload?).to eq true
-        expect(logger.logdev.dev).to be_a RubySmart::SimpleLogger::Devices::ProcDevice
+        expect(logger.logdev).to be_a RubySmart::SimpleLogger::Devices::ProcDevice
       end
 
       it 'can use provided device' do
@@ -43,7 +43,15 @@ RSpec.describe "Helper extension" do
         logger = RubySmart::SimpleLogger.new :memory, stdout: true
 
         expect(logger.formatter.opts[:format]).to eq :passthrough
-        expect(logger.logdev.dev).to be_a RubySmart::SimpleLogger::Devices::MultiDevice
+        expect(logger.logdev).to be_a RubySmart::SimpleLogger::Devices::MultiDevice
+        expect(logger.ignore_payload?).to eq true
+      end
+
+      it 'uses MultiDevice with memory' do
+        logger = RubySmart::SimpleLogger.new RubySmart, memory: true
+
+        expect(logger.formatter.opts[:format]).to eq :passthrough
+        expect(logger.logdev).to be_a RubySmart::SimpleLogger::Devices::MultiDevice
         expect(logger.ignore_payload?).to eq true
       end
     end
@@ -51,18 +59,18 @@ RSpec.describe "Helper extension" do
     describe 'others' do
       it 'forwards provided device' do
         logger = RubySmart::SimpleLogger.new STDOUT
-        expect(logger.logdev.dev).to eq STDOUT
+        expect(logger.logdev).to eq STDOUT
       end
 
       it 'uses STDERR' do
         logger = RubySmart::SimpleLogger.new :stderr
-        expect(logger.logdev.dev).to eq STDERR
+        expect(logger.logdev).to eq STDERR
       end
 
       it 'uses module' do
         logger = RubySmart::SimpleLogger.new RubySmart::SimpleLogger, stdout: true
         expect(logger.formatter.opts[:format]).to eq :passthrough
-        expect(logger.logdev.dev).to be_a RubySmart::SimpleLogger::Devices::MultiDevice
+        expect(logger.logdev).to be_a RubySmart::SimpleLogger::Devices::MultiDevice
 
         logger = RubySmart::SimpleLogger.new RubySmart::SimpleLogger
         expect(logger.formatter.opts[:format]).to eq :plain
@@ -178,28 +186,33 @@ RSpec.describe "Helper extension" do
   end
 
   describe '#_logdev' do
+    it 'returns a logdev instance' do
+      expect(@logger.send(:_logdev, {}, "x.log")).to be_a ::Logger::LogDevice
+    end
+
     it 'returns Module location' do
-      expect(@logger.send(:_logdev, Dummy::With::UsersHelper::OfAny::Levels)).to eq 'log/dummy/with/users_helper/of_any/levels.log'
-      expect(@logger.send(:_logdev, Dummy::With::UsersHelper::OfAny)).to eq 'log/dummy/with/users_helper/of_any.log'
-      expect(@logger.send(:_logdev, Dummy::With::UsersHelper)).to eq 'log/dummy/with/users_helper.log'
-      expect(@logger.send(:_logdev, Dummy)).to eq 'log/dummy.log'
+      expect(@logger.send(:_logdev, {}, Dummy::With::UsersHelper::OfAny::Levels).dev.path).to eq 'log/dummy/with/users_helper/of_any/levels.log'
+      expect(@logger.send(:_logdev, {}, Dummy::With::UsersHelper::OfAny).dev.path).to eq 'log/dummy/with/users_helper/of_any.log'
+      expect(@logger.send(:_logdev, {}, Dummy::With::UsersHelper).dev.path).to eq 'log/dummy/with/users_helper.log'
+      expect(@logger.send(:_logdev, {}, Dummy).dev.path).to eq 'log/dummy.log'
     end
 
     it 'returns file location' do
-      expect(@logger.send(:_logdev, "my-cool-logfile.log")).to eq 'log/my-cool-logfile.log'
+      expect(@logger.send(:_logdev, {}, "my-cool-logfile.log").dev.path).to eq 'log/my-cool-logfile.log'
 
       path = File.expand_path(File.join(File.dirname(__FILE__),'..', '..', '..', '..','log','helper_spec.log'))
-      expect(@logger.send(:_logdev, path)).to eq path
+      expect(@logger.send(:_logdev, {}, path).dev.path).to eq path
     end
 
     it 'returns provided device' do
-      expect(@logger.send(:_logdev, STDOUT)).to eq STDOUT
+      expect(@logger.send(:_logdev, {}, STDOUT)).to eq STDOUT
+      expect(@logger.send(:_logdev, {device: STDOUT})).to eq STDOUT
     end
 
     it 'fails' do
       expect{
-        @logger.send(:_logdev, :logdev)
-      }.to raise_exception RuntimeError, "SimpleLogger :: device 'logdev' must respond to 'write'!"
+        @logger.send(:_logdev, {}, :logdev)
+      }.to raise_exception RuntimeError, "Unable to build SimpleLogger! The provided device 'logdev' must respond to 'write'!"
     end
   end
 end

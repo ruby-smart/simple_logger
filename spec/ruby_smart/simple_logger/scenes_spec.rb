@@ -272,7 +272,7 @@ RSpec.describe RubySmart::SimpleLogger::Scenes do
     before do
       @logger.instance_variable_set(:@ignore_payload, true)
       @log_result = []
-      @logger.logdev.dev.clear!
+      @logger.logdev.clear!
     end
 
     after do
@@ -307,7 +307,7 @@ RSpec.describe RubySmart::SimpleLogger::Scenes do
 
       logs = @logger.logs.join("\n")
 
-      expect(logs).to eq "╔ START - custom process\n╟ ok\n║ ┌ START - sub-process\n║ ├ nope\n║ ├ japp\n║ └ END   - sub-process \n║ ┌ START - sub-process 2\n║ ├ nope\n║ └ END   - FAILED \n╚ END   - SUCCESS "
+      expect(logs).to eq "╔ START :: custom process\n╟ ok\n║ ┌ START :: sub-process\n║ ├ nope\n║ ├ japp\n║ └ END [sub-process] \n║ ┌ START :: sub-process 2\n║ ├ nope\n║ └ END [FAILED] \n╚ END [SUCCESS] "
       expect(logs).to_not include("(duration:")
     end
 

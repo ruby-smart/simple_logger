@@ -7,8 +7,8 @@ module RubySmart
         # returns the logdev logs
         # @return [Array]
         def logs
-          return [] unless logdev.dev.respond_to?(:logs)
-          logdev.dev.logs
+          return [] unless logdev.respond_to?(:logs)
+          logdev.logs
         end
 
         # transforms the logs-array into a hash of logs, grouped by level (:error, :success, ...)

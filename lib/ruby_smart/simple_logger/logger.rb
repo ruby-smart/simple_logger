@@ -40,30 +40,30 @@ module RubySmart
       # defines a uniq key to parse the data
       PAYLOAD_DATA_KEY = :__data__
 
-      # initialize new Logger
-      # @param [Object, Symbol, nil] builtin
-      # @param [Hash] opts
-      # @option opts [Symbol] :format - defines a custom format
-      def initialize(builtin = nil, opts = nil)
-        # check if only a hash was provided
-        if opts.nil? && builtin.is_a?(Hash)
-          opts = builtin
-        else
-          opts ||= {}
+      # initializes a new Logger
+      #
+      # @param [Array] args (<builtin>,<opts>) OR (<builtin>) OR (<opts>)
+      # @option args[Symbol,Array] <builtin> - provide a builtin, either a single symbol or array of symbols
+      # @option args[Hash] <options> - provide custom options
+      def initialize(*args)
+        opts = args.last.is_a?(Hash) ? args.pop : {}
+        opts[:builtin] = args if args.length > 0
 
-          # extend builtin option if not set
-          opts[:builtin] = builtin unless opts[:builtin]
-        end
+        # enhance options with device & formatter
+        _opts_device!(opts)
+        _opts_formatter!(opts)
 
-        # initialize provided opts
-        o = _init_opts(opts)
+        # initialize & set defaults by provided opts
+        _opts_init!(opts)
 
-        super(
-          _logdev(o[:device]),
-          o[:shift_age] || 0,
-          o[:shift_size] || 1048576,
-          **o.slice(:level, :progname, :formatter, :datetime_format, :binmode, :shift_period_suffix)
-        )
+        # initialize with a nil +logdev+ to prevent any nested +LogDevice+ creation.
+        # we already arranged device & formatter to be able to respond to ther required methods
+        super(nil)
+
+        # set explicit after called super
+        self.level = opts[:level]
+        self.formatter = opts[:formatter]
+        @logdev = _logdev(opts)
       end
 
       # overwrite level setter, to accept every available (also newly defined) Severity

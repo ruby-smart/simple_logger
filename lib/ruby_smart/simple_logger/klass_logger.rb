@@ -19,14 +19,13 @@ module RubySmart
         class_variable_set('@@klass_logger_opts', opts)
       end
 
-      # delegate new method to logger
+      # delegate new method to Logger
       def new(*args)
-        args = [nil, self.klass_logger_opts.dup] if args.length == 0
         RubySmart::SimpleLogger::Logger.new(*args)
       end
 
       def klass_logger
-        @klass_logger ||= self.new
+        @klass_logger ||= self.new(self.klass_logger_opts.dup)
       end
 
       def clear!
@@ -34,7 +33,7 @@ module RubySmart
       end
 
       def method_missing(name, *args, &block)
-        return self.klass_logger.send(name, *args) if self.klass_logger.respond_to? name
+        return self.klass_logger.send(name, *args, &block) if self.klass_logger.respond_to? name
         super
       end
 

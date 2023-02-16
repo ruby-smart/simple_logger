@@ -18,7 +18,7 @@ end
 
 # load date extensions for logger
 if GemInfo.loaded?('activesupport') && GemInfo.installed?('actionview')
-  ActiveSupport.on_load(:action_view) do
+  ActiveSupport.on_load(:active_record) do
     require('action_view/helpers/date_helper')
     RubySmart::SimpleLogger::Logger.include(ActionView::Helpers::DateHelper)
   end
