@@ -82,43 +82,43 @@ RSpec.describe "Helper extension" do
 
   describe '#_init_opts' do
     it ':device' do
-      logger = RubySmart::SimpleLogger.new nil, device: 'builtins_spec.log'
+      logger = RubySmart::SimpleLogger.new device: 'builtins_spec.log'
       expect(logger.logdev.dev).to be_a ::File
     end
 
     it ':nl' do
-      logger = RubySmart::SimpleLogger.new nil, nl: true
+      logger = RubySmart::SimpleLogger.new nl: true
       expect(logger.formatter.opts[:nl]).to eq true
 
-      logger2 = RubySmart::SimpleLogger.new nil, nl: false
+      logger2 = RubySmart::SimpleLogger.new nl: false
       expect(logger2.formatter.opts[:nl]).to eq false
     end
 
     it ':clr' do
-      logger2 = RubySmart::SimpleLogger.new nil, clr: true
+      logger2 = RubySmart::SimpleLogger.new clr: true
       expect(logger2.formatter.opts[:clr]).to eq true
 
-      logger3 = RubySmart::SimpleLogger.new nil, clr: false
+      logger3 = RubySmart::SimpleLogger.new clr: false
       expect(logger3.formatter.opts[:clr]).to eq false
     end
 
     it ':payload' do
-      logger = RubySmart::SimpleLogger.new nil, payload: false
+      logger = RubySmart::SimpleLogger.new payload: false
       expect(logger.ignore_payload?).to eq true
     end
 
     it ':format' do
-      logger = RubySmart::SimpleLogger.new nil, format: :plain
+      logger = RubySmart::SimpleLogger.new :stdout, format: :plain
       expect(logger.formatter.opts[:format]).to eq :plain
     end
 
     it ':mask' do
-      logger = RubySmart::SimpleLogger.new nil, mask: {length: 10}
+      logger = RubySmart::SimpleLogger.new mask: {length: 10}
       expect(logger.mask).to eq({char:"=", length: 10, clr: :blue})
     end
 
     it ':level' do
-      logger = RubySmart::SimpleLogger.new nil, level: :fatal
+      logger = RubySmart::SimpleLogger.new level: :fatal
       expect(logger.level).to eq 4
     end
   end

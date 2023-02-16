@@ -9,7 +9,7 @@ RSpec.describe RubySmart::SimpleLogger::Logger do
 
   describe '#initialize' do
     it 'initializes with opts' do
-      l = RubySmart::SimpleLogger.new level: :debug, format: :passthrough, clr: false, nl: true
+      l = RubySmart::SimpleLogger.new :stdout, level: :debug, format: :passthrough, clr: false, nl: true
       expect(l.level).to eq RubySmart::SimpleLogger::Logger::DEBUG
       expect(l.formatter.instance_variable_get(:@opts)).to eq({clr: false, format: :passthrough, nl: true})
     end
