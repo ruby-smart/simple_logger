@@ -11,6 +11,9 @@ RSpec.describe "SimpleLog extension" do
     it 'logs' do
       expect(@logger.log('ok')).to eq true
       expect(@logger.success('ok')).to eq true
+
+      expect(@logger.log(true)).to eq true
+      expect(@logger.log(false)).to eq true
     end
 
     it 'prevents log on level' do
@@ -24,6 +27,7 @@ RSpec.describe "SimpleLog extension" do
       logger2 = RubySmart::SimpleLogger.new :memory
       expect(logger2.success('ok')).to eq true
       expect(logger2.theme('theme')).to eq false
+      expect(logger2.log(nil)).to eq false
     end
   end
 

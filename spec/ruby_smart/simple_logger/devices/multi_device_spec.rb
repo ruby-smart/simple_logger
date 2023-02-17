@@ -78,4 +78,27 @@ RSpec.describe RubySmart::SimpleLogger::Devices::MultiDevice do
       expect(dev.devices.count).to eq 0
     end
   end
+
+  describe '#register' do
+    it 'registers devices' do
+      dev = RubySmart::SimpleLogger::Devices::MultiDevice.new
+
+      expect(dev.devices.count).to eq 0
+
+      dev.register(@receiver1)
+
+      expect(dev.devices.count).to eq 1
+    end
+
+    it 'registers nested devices' do
+      dev = RubySmart::SimpleLogger::Devices::MultiDevice.register(@receiver1)
+      dev2 = RubySmart::SimpleLogger::Devices::MultiDevice.register(@receiver2)
+
+      expect(dev.devices.count).to eq 1
+      dev.register(dev2)
+      expect(dev.devices.count).to eq 2
+      expect(dev.devices[0][:dev]).to eq @receiver1
+      expect(dev.devices[1][:dev]).to eq @receiver2
+    end
+  end
 end

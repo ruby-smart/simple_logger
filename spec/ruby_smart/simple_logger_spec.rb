@@ -7,7 +7,7 @@ RSpec.describe RubySmart::SimpleLogger do
     end
 
     it "has a version number" do
-      expect(RubySmart::SimpleLogger.version.to_s).to eq RubySmart::SimpleLogger::VERSION::STRING
+      expect(RubySmart::SimpleLogger.version.to_s).to eq RubySmart::SimpleLogger::VERSION.to_s
     end
   end
 end

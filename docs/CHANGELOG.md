@@ -1,5 +1,9 @@
 # RubySmart::SimpleLogger - CHANGELOG
 
+## [1.2.1] - 2023-02-17
+* **[fix]** 'rails'-related builtins
+* **[fix]** `::RubySmart::SimpleLogger::Devices::MultiDevice` register `MultiDevice` instead of nested devices
+
 ## [1.2.0] - 2023-02-16
 * **[add]** multi-'builtins' support
 * **[ref]** `Logger` initialization - now supports to provide multiple builtins 

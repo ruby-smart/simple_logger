@@ -136,7 +136,7 @@ module RubySmart
             if ::ThreadInfo.stdout?
               _resolve_device(:stdout, opts)
             elsif ::ThreadInfo.rails? && ::Rails.logger
-              _resolve_device(:stdout, opts)
+              _resolve_device(:rails, opts)
             else
               _resolve_device(:memory, opts)
             end
@@ -145,7 +145,16 @@ module RubySmart
           when :stderr
             STDERR
           when :rails
-            ::Rails.logger.instance_variable_get(:@logdev).dev
+            raise "Unable to build SimpleLogger with 'rails' builtin for not initialized rails application!" unless ThreadInfo.rails?
+
+            # special check for rails-with-console (IRB -> STDOUT) combination - mostly in combination with +Debase+.
+            if ThreadInfo.console? && ::Rails.logger.instance_variable_get(:@logdev).dev != STDOUT
+              ::RubySmart::SimpleLogger::Devices::MultiDevice
+                .register(_resolve_device(:stdout, opts))
+                .register(::Rails.logger.instance_variable_get(:@logdev).dev)
+            else
+              ::Rails.logger.instance_variable_get(:@logdev).dev
+            end
           when :proc
             # force overwrite opts
             @ignore_payload = true

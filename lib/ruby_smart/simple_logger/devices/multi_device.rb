@@ -53,10 +53,15 @@ module RubySmart
         #
         # @param [Object] dev
         def register(dev, formatter = nil)
-          @devices << {
-            dev:       dev,
-            formatter: formatter
-          }
+          # check device, to prevent nested sets of +MultiDevice+
+          if dev.is_a?(MultiDevice)
+            @devices += dev.devices
+          else
+            @devices << {
+              dev:       dev,
+              formatter: formatter
+            }
+          end
 
           self
         end
