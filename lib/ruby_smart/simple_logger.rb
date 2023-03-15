@@ -17,9 +17,8 @@ module RubySmart
 end
 
 # load date extensions for logger
-if GemInfo.loaded?('activesupport') && GemInfo.installed?('actionview')
-  ActiveSupport.on_load(:active_record) do
-    require('action_view/helpers/date_helper')
-    RubySmart::SimpleLogger::Logger.include(ActionView::Helpers::DateHelper)
-  end
+# since 'actionview' is loaded in different ways, we only can check for +installed?+ here...
+if GemInfo.installed?('actionview')
+  # IMPORTANT: any require will break the loading process
+  RubySmart::SimpleLogger::Logger.include(ActionView::Helpers::DateHelper) unless RubySmart::SimpleLogger::Logger.included_modules.include?(ActionView::Helpers::DateHelper)
 end

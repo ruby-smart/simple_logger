@@ -61,36 +61,30 @@ module RubySmart
           # check for already existing +device+
           return if opts[:device]
 
-          # remove builtin key from opts
-          builtin = opts.delete(:builtin)
+          # remove builtin key from opts and force an array
+          builtins = Array(opts.delete(:builtin))
 
-          # retransform array into single value
-          builtin = builtin[0] if builtin.is_a?(Array) && builtin.length < 2
+          # expand builtins with stdout
+          builtins << :stdout if opts.delete(:stdout)
 
-          # expand current builtin with optional provided keywords
-          if opts.delete(:stdout)
-            builtin = [builtin] unless builtin.is_a?(Array)
-            builtin << :stdout
-          end
+          # expand builtins with memory
+          builtins << :memory if opts.delete(:memory)
 
-          if opts.delete(:memory)
-            builtin = [builtin] unless builtin.is_a?(Array)
-            builtin << :memory
-          end
+          builtins.uniq!
 
-          # determinate builtin - first check to create +MultiDevice+.
-          if builtin.is_a?(Array)
+          # don't create multi-device for a single (or +nil+) builtin
+          if builtins.length < 2
+            opts[:device] = _resolve_device(builtins[0], opts)
+          else
             opts[:device] = ::RubySmart::SimpleLogger::Devices::MultiDevice.new
-            builtin.uniq.each do |key|
+            builtins.each do |builtin|
               # IMPORTANT: dup, original hash to prevent reference manipulation (on the TOP-level, only)
               builtin_opts = opts.dup
-              opts[:device].register(_resolve_device(key, builtin_opts), _resolve_formatter(builtin_opts))
+              opts[:device].register(_resolve_device(builtin, builtin_opts), _resolve_formatter(builtin_opts))
             end
 
             # force 'passthrough', as format, since this is required for multi-devices
             opts[:format] = :passthrough
-          else
-            opts[:device] = _resolve_device(builtin, opts)
           end
 
           # prevent to return any data

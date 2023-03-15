@@ -1,5 +1,9 @@
 # RubySmart::SimpleLogger - CHANGELOG
 
+## [1.2.2] - 2023-03-15
+* **[ref]** simplify device-generation for builtins 
+* **[fix]** `ActionView::Helpers::DateHelper` require, which breaks rails loading process in some cases
+
 ## [1.2.1] - 2023-02-17
 * **[fix]** 'rails'-related builtins
 * **[fix]** `::RubySmart::SimpleLogger::Devices::MultiDevice` register `MultiDevice` instead of nested devices
