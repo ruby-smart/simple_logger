@@ -110,4 +110,18 @@ RSpec.describe "SimpleLog extension" do
       expect(@logger.inspector).to eq :ai
     end
   end
+
+  describe 'tagged' do
+    it 'logs with tag' do
+      logger     = RubySmart::SimpleLogger.new RubySmart::SimpleLogger::Devices::MemoryDevice.new, format: :plain, nl: false, clr: true, payload: false
+      logger.success("ok", tag: :custom_tag)
+      expect(logger.logs.join).to eq "[\e[46mCUSTOM_TAG\e[0m] ok"
+    end
+
+    it 'prevents tagged logging' do
+      logger     = RubySmart::SimpleLogger.new RubySmart::SimpleLogger::Devices::MemoryDevice.new, format: :plain, nl: false, clr: true, payload: false, tagged: false
+      logger.success("ok", tag: :custom_tag)
+      expect(logger.logs.join).to eq "ok"
+    end
+  end
 end

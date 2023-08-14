@@ -560,7 +560,7 @@ The following PRE-defined scenes are available. _(You can define your own scenes
 # > ==========================================================================================================
 ```
 
-### info, warn, error, fatal, success (data, subject = 'name')
+### info, warn, error, fatal, unknown, success (data, subject = 'name')
 ```ruby
 # info method (BASE)
 # severity: methods name
@@ -748,19 +748,19 @@ l.processed("Process Alpha", timer: true) do
 end
 
 
-# ╔ START :: Process Alpha
+# ╔ START ❯ Process Alpha
 # ╟ find files
 # ╟ found 34 files
-# ║ ┌ START :: extracting ...
+# ║ ┌ START ❯ extracting ...
 # ║ ├ 10% done
 # ║ ├ 20% done
 # ║ ├ 100% done
-# ║ └ END [SUCCESS] (duration: 0.000267545)
-# ║ ┌ START :: transforming ...
+# ║ └   END ❯ extracting ... [SUCCESS] (0.000244804)
+# ║ ┌ START ❯ transforming ...
 # ║ ├ bad memory
 # ║ ├ rolling back
-# ║ └ END [FAILED]
-# ╚ END [Process Alpha] (duration: 0.001040807)
+# ║ └   END ❯ transforming ... [FAIL]
+# ╚   END ❯ Process Alpha (0.001036969)
 ```
 
 ### _other useful methods_

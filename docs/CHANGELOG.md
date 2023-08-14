@@ -1,5 +1,19 @@
 # RubySmart::SimpleLogger - CHANGELOG
 
+## [1.3.0] - 2023-08-15
+* **[add]** exception message within `processed`-scene
+* **[add]** new logging option `tag`, to prefix a log-string with a [TAG]
+* **[add]** logger options `processed: false` & `tagged: false` to prevent processing or tagging
+* **[add]** `_tagged`-helper method
+* **[add]** `__scene_subject_with_opts`-helper method to grep subject&opts from args (used for default severities)
+* **[add]** additional box_chars for 'tagged' & 'feed' extensions - used @ `processed`-scene
+* **[add]** `unknown`-scene
+* **[ref]** `processed`-scene with better logging chars & homogenous syntax for humanized reading
+* **[fix]** missing '_declr' for memory formatting (only on Strings)
+* **[fix]** missing 'clr:false' option for memory devices
+* **[fix]** exception while in `processed`-scene not logging the END-line
+* **[fix]** re-using timer-methods with the same key, did not restart the 'total' measurement
+
 ## [1.2.2] - 2023-03-15
 * **[ref]** simplify device-generation for builtins 
 * **[fix]** `ActionView::Helpers::DateHelper` require, which breaks rails loading process in some cases

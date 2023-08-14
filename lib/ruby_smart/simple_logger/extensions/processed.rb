@@ -12,10 +12,15 @@ module RubySmart
           base.class_eval do
             # set default box chars
             self.box_chars = {
-              __default__:   %w(╟ ├),
-              __processed__: %w(║ │),
+              # control characters by provided +:pcd+
+              default:       %w(╟ ├),
               start:         %w(╔ ┌),
-              end:           %w(╚ └)
+              end:           %w(╚ └),
+
+              # additional characters, added ad specific position
+              __processed__: %w(║ │),
+              __feed__:      %w(═ ─),
+              __tagged__:    %w(┄ ┄),
             }.freeze
           end
         end
@@ -33,18 +38,20 @@ module RubySmart
         module InstanceMethods
           # returns the current processed level.
           # by providing a handle it will either increase or decrease the current level.
-          # @param [nil, Symbol] handle - optional handle to increase or decrease the current lvl (+:up+ / +:down+)
+          # @param [Symbol|Integer] handle - optional handle to increase or decrease the current lvl (+:up+ / +:down+)
           # @return [Integer]
           def processed_lvl(handle = nil)
             @processed_lvl ||= -1
 
             case handle
+            when :reset
+              @processed_lvl = -1
             when :up
               @processed_lvl += 1
             when :down
               @processed_lvl -= 1 if @processed_lvl >= 0
             else
-              # nothing here ...
+              @processed_lvl = handle if handle.is_a?(Integer)
             end
 
             @processed_lvl
@@ -53,25 +60,54 @@ module RubySmart
           # returns true if the processed state is active.
           # @return [Boolean]
           def processed?
-            processed_lvl >= 0
+            processed_lvl >= 0 && !@ignore_processed
           end
 
           private
 
           # transforms the provided data into a 'processed' string and forces the data to be transformed to string.
           # simple returns the provided data, if currently not processed.
-          # @param [Object] data
+          # @param [String] data
           # @param [Hash] opts
-          # @return [Object,String]
+          # @return [String]
           def _pcd(data, opts)
             # check for active pcd (processed)
             return data if opts[:pcd] == false || !processed?
 
-            # resolve lvl, once
+            # resolve the current level - either directly through the options or the +processed_lvl+.
             lvl = opts[:lvl] || processed_lvl
 
-            # create final string
-            lvl.times.map { |i| "#{_pcd_box_char(:__processed__, i)} " }.join + _pcd_box_char(opts[:pcd], lvl) + " #{data}"
+            # prepares the out-string array
+            strs = []
+
+            # add level-charters with indent
+            lvl.times.each { |i|
+              # ║ │
+              strs << _pcd_box_char(:__processed__, i) + ' '
+            }
+
+            # add pcd-related control character
+            strs << _pcd_box_char(opts[:pcd], lvl)
+
+            # add pcd-operation string
+            if opts[:pcd].is_a?(Symbol)
+              # ╔ START ❯
+              # └   END ❯
+              strs << " #{opts[:pcd].to_s.upcase.rjust(5)} \u276F"
+            end
+
+            # check for tagged
+            # ┄
+            if opts[:tag]
+              strs << _pcd_box_char(:__tagged__, lvl)
+            else
+              strs << ' '
+            end
+
+            # add data
+            strs << data.to_s
+
+            strs.join
           end
 
           # returns the processed box character for provided key and position.
@@ -81,7 +117,7 @@ module RubySmart
           # @param [Integer] pos
           # @return [String]
           def _pcd_box_char(key, pos = 0)
-            chars = self.class.box_chars[key] || self.class.box_chars[:__default__]
+            chars = self.class.box_chars[key] || self.class.box_chars[:default]
             chars[pos] || chars[-1]
           end
         end

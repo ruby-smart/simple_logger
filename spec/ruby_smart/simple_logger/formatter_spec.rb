@@ -126,9 +126,9 @@ RSpec.describe RubySmart::SimpleLogger::Formatter do
       expect(@formatter.('WARN', @dt, nil, { a: 1, b: '2', c: :_3 })).to eq(['WARN', @dt, nil, { a: 1, b: '2', c: :_3 }])
     end
 
-    it 'formats tmp' do
+    it 'formats memory' do
       @formatter.opts(format: :memory)
-      expect(@formatter.('SUCCESS', @dt, nil, 'At vero')).to eq [:success, @dt, 'At vero']
+      expect(@formatter.('SUCCESS', @dt, nil, 'At vero'.red)).to eq [:success, @dt, 'At vero']
       expect(@formatter.('WARN', @dt, nil, { a: 1, b: '2', c: :_3 })).to eq([:warn, @dt, { a: 1, b: '2', c: :_3 }])
     end
 

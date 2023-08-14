@@ -12,6 +12,11 @@ RSpec.describe "Timer extension" do
       expect(@logger.timer(nil)).to be_nil
       expect(@logger.timer(:unknown)).to be_nil
     end
+
+    it 'does not react to nil key' do
+      expect(@logger.timer(:start, nil)).to be_nil
+      expect(@logger.timer(:start, :my_custom_timer)).not_to be_nil
+    end
   end
 
   describe 'restarts' do
@@ -53,12 +58,32 @@ RSpec.describe "Timer extension" do
       expect(@logger.timer(:start, :t2)).to be true
       tmp = 0
       expect{
-        sleep 0.05
+        sleep 0.09
         tmp = @logger.timer(:current, :t2)
       }.to change{
         @logger.timer(:current, :t2)
       }
 
+      sleep 0.5
+
+      # start should restart timer
+      expect(@logger.timer(:start, :t2)).to be true
+      expect(@logger.timer(:current, :t2)).to be < tmp
+    end
+
+    it 'stopped timer' do
+      expect(@logger.timer(:start, :t2)).to be true
+      tmp = 0
+      expect{
+        sleep 0.09
+        tmp = @logger.timer(:current, :t2)
+      }.to change{
+        @logger.timer(:current, :t2)
+      }
+      # stop calculates total
+      @logger.timer(:stop, :t2)
+
+      # start should restart timer
       expect(@logger.timer(:start, :t2)).to be true
       expect(@logger.timer(:current, :t2)).to be < tmp
     end

@@ -14,8 +14,7 @@ module RubySmart
         # set / overwrite default opts
         # @param [Hash] opts
         def _opts_init!(opts)
-          ##################################################################################
-          # level
+          # -- level ---------------------------------------------------------------------------------------------------
 
           # initialize a default rails-dependent output
           if ::ThreadInfo.rails?
@@ -25,8 +24,7 @@ module RubySmart
           # clean & rewrite level (possible symbols) to real level
           opts[:level] = _level(opts[:level] || :debug)
 
-          ##################################################################################
-          # mask
+          # -- mask ----------------------------------------------------------------------------------------------------
 
           # set mask from options
           self.mask(opts[:mask]) if opts[:mask]
@@ -39,13 +37,18 @@ module RubySmart
             self.mask(length: ::ThreadInfo.winsize[1])
           end
 
-          ##################################################################################
-          # instance related
+          # -- instance related ----------------------------------------------------------------------------------------
 
           # ignore payload and send data directly to the logdev
-          @ignore_payload = true if @ignore_payload.nil? && opts[:payload] == false
+          @ignore_payload   = true if @ignore_payload.nil? && opts[:payload] == false
 
-          # set the inspector to be used for data inspection.
+          # ignore processed logging and send data without 'leveling' & PCD-char to the logdev
+          @ignore_processed = true if @ignore_processed.nil? && opts[:processed] == false
+
+          # ignore tagged logging and send data without 'tags' to the logdev
+          @ignore_tagged    = true if @ignore_tagged.nil? && opts[:tagged] == false
+
+          # set custom inspector (used for data inspection)
           # 'disable' inspector, if false was provided - which simply results in +#to_s+
           @inspector = (opts[:inspect] == false) ? :to_s : opts[:inspector]
 
@@ -113,7 +116,7 @@ module RubySmart
           opts[:format] ||= :plain
 
           # fix nl - which depends on other opts
-          opts[:nl] = _nl(opts)
+          opts[:nl]  = _nl(opts)
 
           # fix clr
           opts[:clr] = true if opts[:clr].nil?
@@ -152,14 +155,16 @@ module RubySmart
           when :proc
             # force overwrite opts
             @ignore_payload = true
-            opts[:nl]      = false
-            opts[:format]  = :passthrough
+            opts[:nl]       = false
+            opts[:format]   = :passthrough
 
             ::RubySmart::SimpleLogger::Devices::ProcDevice.new(opts.delete(:proc))
           when :memory
             # force overwrite opts
             @ignore_payload = true
-            opts[:format]  = :memory
+            opts[:format]   = :memory
+            # no color logging for memory devices
+            opts[:clr] = false
 
             ::RubySmart::SimpleLogger::Devices::MemoryDevice.new
           when Module, String
@@ -275,6 +280,18 @@ module RubySmart
           end
         end
 
+        # 'tags' a provided string
+        # returns the string if no tag was provided or general tags are disabled
+        # @param [String] str
+        # @param [nil|Symbol|String] tag
+        # @return [String]
+        def _tagged(str, tag = nil)
+          # check for active tag
+          return str if tag.nil? || ignore_tagged?
+
+          "#{"[#{tag.to_s.upcase.bg_cyan}]"} #{str}"
+        end
+
         # colorizes a provided string
         # returns the string if no color was provided or invalid
         #
@@ -341,6 +358,19 @@ module RubySmart
             :red
           else
             res_or_clr.to_sym
+          end
+        end
+
+        # resolves subject & opts from provided args.
+        # returns provided default subject, if not in args.
+        # @param [Object] args
+        # @param [String] subject
+        # @return [Array]
+        def _scene_subject_with_opts(args, subject = '')
+          if args[0].is_a?(Hash)
+            [subject, args[0]]
+          else
+            [args[0] || subject, args[1] || {}]
           end
         end
       end

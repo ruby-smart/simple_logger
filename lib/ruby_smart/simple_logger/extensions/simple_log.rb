@@ -53,7 +53,7 @@ module RubySmart
               # prevent logging nil data
               return false if data.nil?
 
-              add level, _pcd(data, opts)
+              add level, _parse_data(data, opts)
               return true
             end
 
@@ -82,6 +82,14 @@ module RubySmart
             !!@ignore_payload
           end
 
+          # returns true if no tags should be created - instead the data will be send directly to the logdev
+          # forces the *simple_log* method to prevent building tags from opts
+          #
+          # @return [Boolean]
+          def ignore_tagged?
+            !!@ignore_tagged
+          end
+
           # resolve an inspector method for data inspection
           # @return [Symbol, nil]
           def inspector
@@ -107,7 +115,7 @@ module RubySmart
               str = ''
               if payload == self.class::PAYLOAD_DATA_KEY
                 # checks, if we should inspect the data
-                str << _parse_data(data, (opts[:inspect] ? (opts[:inspector] || self.inspector) : nil))
+                str << _parse_inspect_data(data, opts)
               else
                 str << _parse_payload(payload, opts)
               end
@@ -121,13 +129,33 @@ module RubySmart
             true
           end
 
-          # just parses the data and calls an inspection method, if provided
+          # parses the provided data to string.
+          # - calls an inspection method, if provided
+          # - tags the string, if provided
+          # - adds processed prefix-chars, if provided
           #
           # @param [Object] data
-          # @param [Symbol, nil] inspector - the inspection method to be called (e.g. :ai, :inspect, :to_s) - if not provided it tries to auto-resolve
+          # @param [Hash] opts
           # @return [String] stringified data
-          def _parse_data(data, inspector = nil)
-            (inspector ? data.send(inspector) : data).to_s
+          def _parse_data(data, opts)
+            _pcd(
+              _tagged(
+                data.to_s,
+                opts[:tag]
+              ),
+              opts
+            )
+          end
+
+          # parses the provided data to string, but calls a possible inspect method.
+          # @param [Object] data
+          # @param [Hash] opts
+          # @return [String] stringified data
+          def _parse_inspect_data(data, opts)
+            _parse_data(
+              data.send(opts[:inspect] ? (opts[:inspector] || self.inspector) : :to_s),
+              opts
+            )
           end
 
           # parses a single payload with provided options

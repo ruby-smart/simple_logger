@@ -5,21 +5,23 @@ module RubySmart
     module Extensions
       module Timer
         def timer(action, key = :default, opts = {})
+          return if key.nil?
+
           @timers      ||= {}
           @timers[key] ||= {
             start:   nil,
             stop:    nil,
-            measure: 0
+            total: 0
           }
 
           case action
-          when :restart
+          when :start, :restart
             @timers[key][:start]   = Time.now
             @timers[key][:stop]    = nil
-            @timers[key][:measure] = 0
+            @timers[key][:total] = 0
 
             true
-          when :start, :continue
+          when :continue
             @timers[key][:start] = Time.now
             @timers[key][:stop]  = nil
 
@@ -27,13 +29,13 @@ module RubySmart
           when :stop
             return false if !@timers[key][:start] || @timers[key][:stop]
             @timers[key][:stop]    = Time.now
-            @timers[key][:measure] += @timers[key][:stop] - @timers[key][:start]
+            @timers[key][:total] += @timers[key][:stop] - @timers[key][:start]
 
             true
           when :pause
             return false if !@timers[key][:start] || @timers[key][:stop]
 
-            @timers[key][:measure] += Time.now - @timers[key][:start]
+            @timers[key][:total] += Time.now - @timers[key][:start]
             @timers[key][:start]   = nil
             @timers[key][:stop]    = nil
 
@@ -50,7 +52,7 @@ module RubySmart
               current
             end
           when :current
-            current = @timers[key][:measure]
+            current = @timers[key][:total]
             current += Time.now - @timers[key][:start] if @timers[key][:start] && @timers[key][:stop].nil?
             current
           else

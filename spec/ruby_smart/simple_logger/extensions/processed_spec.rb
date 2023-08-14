@@ -35,6 +35,13 @@ RSpec.describe "Processed extension" do
       expect(logger.processed_lvl(:down)).to eq 4
       expect(logger.processed_lvl).to eq 4
     end
+
+    it 'resets' do
+      logger = RubySmart::SimpleLogger.new :memory
+      logger.instance_variable_set(:@processed_lvl, 6)
+
+      expect(logger.processed_lvl(:reset)).to eq -1
+    end
   end
 
   describe '#processed?' do
@@ -80,13 +87,13 @@ RSpec.describe "Processed extension" do
       data = "test"
 
       logger.processed_lvl(:up)
-      expect(logger.send(:_pcd, data, {pcd: :start})).to eq '╔ test'
+      expect(logger.send(:_pcd, data, {pcd: :start})).to eq "╔ START ❯ test"
 
       logger.processed_lvl(:up)
-      expect(logger.send(:_pcd, data, {pcd: :start})).to eq '║ ┌ test'
-      expect(logger.send(:_pcd, data, {pcd: :start, lvl: 0})).to eq '╔ test'
+      expect(logger.send(:_pcd, data, {pcd: :start})).to eq "║ ┌ START ❯ test"
+      expect(logger.send(:_pcd, data, {pcd: :start, lvl: 0})).to eq "╔ START ❯ test"
 
-      expect(logger.send(:_pcd, data, {pcd: :end})).to eq '║ └ test'
+      expect(logger.send(:_pcd, data, {pcd: :end})).to eq "║ └   END ❯ test"
     end
   end
 

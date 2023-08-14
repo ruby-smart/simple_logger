@@ -33,7 +33,7 @@ module RubySmart
         plain: -> (_severity, _time, _progname, data) { _nl _declr(data.to_s) },
 
         # specialized array for memory-logging
-        memory: -> (severity, time, _progname, data) { [severity.downcase.to_sym, time, data] },
+        memory: -> (severity, time, _progname, data) { [severity.downcase.to_sym, time, _declr(data)] },
 
         # specialized string as datalog with every provided data in additional brackets -> [data] [data] [data]
         datalog: -> (severity, time, _progname, data) {
@@ -202,7 +202,7 @@ module RubySmart
       # @param [String] str
       # @return [String]
       def _declr(str)
-        if opts[:clr]
+        if opts[:clr] || !str.is_a?(String)
           str
         else
           str.gsub(/\e\[[\d;]+m/, '')

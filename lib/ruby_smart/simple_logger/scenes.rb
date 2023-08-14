@@ -11,7 +11,8 @@ module RubySmart
         # > ================================================= [Debug] ================================================
         # > "DEBUGGED DATA" <- analyzed by awesome_print#ai method
         # > ==========================================================================================================
-        base.scene :debug, { level: :debug, inspect: true, payload: [[:mask, ' [%{subject}] '], :__data__, :mask] } do |data, subject = 'Debug', opts = {}|
+        base.scene :debug, { level: :debug, inspect: true, payload: [[:mask, ' [%{subject}] '], :__data__, :mask] } do |data, *args|
+          subject, opts = _scene_subject_with_opts(args, 'Debug')
           self.log data, _scene_opt(:debug, { subject: subject }, opts)
         end
 
@@ -22,7 +23,8 @@ module RubySmart
         # > ================================================= [Info] =================================================
         # > DATA
         # > ==========================================================================================================
-        base.scene :info, { level: :info, mask: { clr: :cyan }, payload: [[:mask, ' [%{subject}] '], :__data__, :mask] } do |data, subject = 'Info', opts = {}|
+        base.scene :info, { level: :info, mask: { clr: :cyan }, payload: [[:mask, ' [%{subject}] '], :__data__, :mask] } do |data, *args|
+          subject, opts = _scene_subject_with_opts(args, 'Info')
           self.log data, _scene_opt(:info, { subject: subject }, opts)
         end
 
@@ -33,7 +35,8 @@ module RubySmart
         # > ================================================= [Warn] =================================================
         # > DATA
         # > ==========================================================================================================
-        base.scene :warn, { level: :warn, mask: { clr: :yellow }, payload: [[:mask, ' [%{subject}] '], :__data__, :mask] } do |data, subject = 'Warn', opts = {}|
+        base.scene :warn, { level: :warn, mask: { clr: :yellow }, payload: [[:mask, ' [%{subject}] '], :__data__, :mask] } do |data, *args|
+          subject, opts = _scene_subject_with_opts(args, 'Warn')
           self.log data, _scene_opt(:warn, { subject: subject }, opts)
         end
 
@@ -44,7 +47,8 @@ module RubySmart
         # > ================================================ [Error] =================================================
         # > DATA
         # > ==========================================================================================================
-        base.scene :error, { level: :error, mask: { clr: :red }, payload: [[:mask, ' [%{subject}] '], :__data__, :mask] } do |data, subject = 'Error', opts = {}|
+        base.scene :error, { level: :error, mask: { clr: :red }, payload: [[:mask, ' [%{subject}] '], :__data__, :mask] } do |data,*args|
+          subject, opts = _scene_subject_with_opts(args, 'Error')
           self.log data, _scene_opt(:error, { subject: subject }, opts)
         end
 
@@ -55,8 +59,21 @@ module RubySmart
         # > ================================================ [Fatal] =================================================
         # > DATA
         # > ==========================================================================================================
-        base.scene :fatal, { level: :fatal, mask: { clr: :bg_red }, payload: [[:mask, ' [%{subject}] '], :__data__, :mask] } do |data, subject = 'Fatal', opts = {}|
+        base.scene :fatal, { level: :fatal, mask: { clr: :bg_red }, payload: [[:mask, ' [%{subject}] '], :__data__, :mask] } do |data, *args|
+          subject, opts = _scene_subject_with_opts(args, 'Fatal')
           self.log data, _scene_opt(:fatal, { subject: subject }, opts)
+        end
+
+        # unknown method (BASE)
+        # log level @ unknown
+        # prints: enclosed data
+        #
+        # > =============================================== [Unknown] ================================================
+        # > DATA
+        # > ==========================================================================================================
+        base.scene :unknown, { level: :unknown, mask: { clr: :gray }, payload: [[:mask, ' [%{subject}] '], :__data__, :mask] } do |data, *args|
+          subject, opts = _scene_subject_with_opts(args, 'Unknown')
+          self.log data, _scene_opt(:unknown, { subject: subject }, opts)
         end
 
         # success method
@@ -66,7 +83,8 @@ module RubySmart
         # > ================================================ [Success] ================================================
         # > DATA
         # > ===========================================================================================================
-        base.scene :success, { level: :success, mask: { clr: :green }, payload: [[:mask, ' [%{subject}] '], :__data__, :mask] } do |data, subject = 'Success', opts = {}|
+        base.scene :success, { level: :success, mask: { clr: :green }, payload: [[:mask, ' [%{subject}] '], :__data__, :mask] } do |data, *args|
+          subject, opts = _scene_subject_with_opts(args, 'Success')
           self.log data, _scene_opt(:success, { subject: subject }, opts)
         end
 
@@ -287,33 +305,51 @@ module RubySmart
         # log level @ debug
         # prints: a processed output with unicode box-chars (e.g. ║ )
         #
-        # ╔ START :: job
+        # ╔ START ❯ job
         # ╟ doing some cool log
         # ╟ doing some extra log
-        # ╚ END [job] (duration: 4.34223)
+        # ╚ END   ❯ job [SUCCESS] (duration: 4.34223)
         base.scene :processed, { level: :debug } do |name, opts = {}, &block|
-          # resolve the current process-level
+          # increase level
           lvl = processed_lvl(:up)
 
-          # start the timer, if it should - directly sets a timer key to be reused in the +:clear+ method
-          if (timer_key = (opts[:timer] ? "processed_#{lvl}" : nil))
-            self.timer(:start, timer_key) if timer_key
+          # resolve a new time-key.
+          # The key depends on the current level - this should be possible, since processes on the same level should not be possible
+          timer_key = if opts[:timer]
+                        "processed_#{lvl}"
+                      else
+                        nil
+                      end
+
+          begin
+            # starts new time (if key was created)
+            self.timer(:start, timer_key)
+
+            # send START name as +data+ - the full log line is created through the +_pcd+ method.
+            self.log(name, _scene_opt(:processed, opts, { pcd: :start }))
+
+            # run the provided block and resolve result
+            result_str = case block.call
+                         when true
+                           '[SUCCESS]'.bg_green + ' '
+                         when false
+                           '[FAIL]'.bg_red + ' '
+                         else
+                           ''
+                         end
+          rescue => e
+            self.fatal("#{e.message} @ #{e.backtrace_locations&.first}") unless opts[:silent]
+            # reraise exception
+            raise
+          ensure
+            result_str ||= ''
+
+            # send END name with result & possible time as +data+ - the full log line is created through the +_pcd+ method.
+            self.log("#{name} #{result_str}#{(timer_key ? "(#{self.timer(:clear, timer_key, humanized: true)})" : '')}", _scene_opt(:processed, opts, { pcd: :end }))
+
+            # reduce level
+            processed_lvl(:down)
           end
-
-          self.log("START :: #{name}", _scene_opt(:processed, opts, { pcd: :start }))
-
-          end_str = case block.call
-                    when true
-                      'SUCCESS'
-                    when false
-                      'FAILED'
-                    else
-                      name
-                    end
-
-          self.log("END [#{end_str}] #{(timer_key ? "(duration: #{self.timer(:clear, timer_key, humanized: true)})" : '')}", _scene_opt(:processed, opts, { pcd: :end }))
-
-          processed_lvl(:down)
 
           true
         end

@@ -60,6 +60,16 @@ RSpec.describe RubySmart::SimpleLogger::Scenes do
       }.to change { @log_result }
     end
 
+    it '#unknown' do
+      expect {
+        spec_log_result(:unknown) do |res|
+          res << "\e[1;30m============================================= [Unknown] ============================================\e[0m\n"
+          res << "example\n"
+          res << "\e[1;30m====================================================================================================\e[0m\n"
+        end
+      }.to change { @log_result }
+    end
+
     it '#success' do
       expect {
         spec_log_result(:success) do |res|
@@ -307,8 +317,8 @@ RSpec.describe RubySmart::SimpleLogger::Scenes do
 
       logs = @logger.logs.join("\n")
 
-      expect(logs).to eq "╔ START :: custom process\n╟ ok\n║ ┌ START :: sub-process\n║ ├ nope\n║ ├ japp\n║ └ END [sub-process] \n║ ┌ START :: sub-process 2\n║ ├ nope\n║ └ END [FAILED] \n╚ END [SUCCESS] "
-      expect(logs).to_not include("(duration:")
+      expect(logs).to eq "╔ START ❯ custom process\n╟ ok\n║ ┌ START ❯ sub-process\n║ ├ nope\n║ ├ japp\n║ └   END ❯ sub-process \n║ ┌ START ❯ sub-process 2\n║ ├ nope\n║ └   END ❯ sub-process 2 \e[41m[FAIL]\e[0m \n╚   END ❯ custom process \e[42m[SUCCESS]\e[0m "
+      expect(logs).to_not include("(")
     end
 
     it '#processed with timer' do
@@ -317,7 +327,42 @@ RSpec.describe RubySmart::SimpleLogger::Scenes do
         nil
       end
 
-      expect(@logger.logs.join).to include("(duration:")
+      expect(@logger.logs.join).to include("(")
+    end
+
+    it '#processed with exception log' do
+      expect{
+        @logger.processed("other process", timer: true) do
+          @logger.success("ok")
+          raise "THAT FAILED"
+        end
+      }.to raise_error "THAT FAILED"
+
+      expect(@logger.logs.join).to include("THAT FAILED")
+    end
+
+    it '#processed without exception log' do
+      expect{
+        @logger.processed("other process", timer: true, silent: true) do
+          @logger.success("ok")
+          raise "THAT FAILED"
+        end
+      }.to raise_error "THAT FAILED"
+
+      expect(@logger.logs.join).to_not include("THAT FAILED")
+    end
+
+    it '#processed with tag' do
+      @logger.processed("processing nice stuff", timer: true) do
+        @logger.success("done", tag: :run)
+        @logger.fatal("totally failed", tag: :cleanup)
+        nil
+      end
+
+      logs = @logger.logs.join("\n")
+
+      expect(logs).to include("╟┄[\e[46mRUN\e[0m] done")
+      expect(logs).to include("╟┄[\e[46mCLEANUP\e[0m] totally failed")
     end
   end
 end
