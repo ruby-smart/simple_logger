@@ -95,7 +95,7 @@ RSpec.describe "Helper extension" do
     end
 
     it ':clr' do
-      logger2 = RubySmart::SimpleLogger.new clr: true
+      logger2 = RubySmart::SimpleLogger.new :stdout, clr: true
       expect(logger2.formatter.opts[:clr]).to eq true
 
       logger3 = RubySmart::SimpleLogger.new clr: false
@@ -113,7 +113,7 @@ RSpec.describe "Helper extension" do
     end
 
     it ':mask' do
-      logger = RubySmart::SimpleLogger.new mask: {length: 10}
+      logger = RubySmart::SimpleLogger.new :stdout, mask: {length: 10}
       expect(logger.mask).to eq({char:"=", length: 10, clr: :blue})
     end
 

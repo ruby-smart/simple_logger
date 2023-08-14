@@ -70,7 +70,8 @@ RSpec.describe RubySmart::SimpleLogger::Logger do
 
   describe '#mask' do
     it 'has a default mask' do
-      expect(@logger.mask).to eq({char:"=", length: 100, clr: :blue})
+      logger = RubySmart::SimpleLogger.new :stdout
+      expect(logger.mask).to eq({char:"=", length: 100, clr: :blue})
     end
   end
 end
