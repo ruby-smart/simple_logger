@@ -11,6 +11,7 @@ require_relative 'extensions/timer'
 
 require_relative 'devices/memory_device'
 require_relative 'devices/multi_device'
+require_relative 'devices/null_device'
 require_relative 'devices/proc_device'
 
 require_relative 'formatter'

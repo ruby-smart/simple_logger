@@ -132,11 +132,19 @@ module RubySmart
           when nil # builtin is nil - resolve optimal device for current environment
             if ::ThreadInfo.stdout?
               _resolve_device(:stdout, opts)
+            elsif ::ThreadInfo.debugger?
+              _resolve_device(:debugger, opts)
             elsif ::ThreadInfo.rails? && ::Rails.logger
               _resolve_device(:rails, opts)
             else
               _resolve_device(:memory, opts)
             end
+          when :null
+            ::RubySmart::SimpleLogger::Devices::NullDevice.new
+          when :debugger
+            raise "Unable to build SimpleLogger with 'debugger' builtin for not initialized Debugger!" unless ThreadInfo.debugger?
+
+            _resolve_device(::Debugger.logger, opts)
           when :stdout
             STDOUT
           when :stderr
@@ -148,9 +156,9 @@ module RubySmart
             if ThreadInfo.console? && ::Rails.logger.instance_variable_get(:@logdev).dev != STDOUT
               ::RubySmart::SimpleLogger::Devices::MultiDevice
                 .register(_resolve_device(:stdout, opts))
-                .register(::Rails.logger.instance_variable_get(:@logdev).dev)
+                .register(_resolve_device(::Rails.logger, opts))
             else
-              ::Rails.logger.instance_variable_get(:@logdev).dev
+              _resolve_device(::Rails.logger, opts)
             end
           when :proc
             # force overwrite opts
@@ -171,6 +179,8 @@ module RubySmart
             # force overwrite opts
             opts[:clr] = false
             _logdev(opts, builtin)
+          when ::Logger
+            builtin.instance_variable_get(:@logdev).dev
           else
             _logdev(opts, builtin)
           end

@@ -47,7 +47,7 @@ module RubySmart
         # > ================================================ [Error] =================================================
         # > DATA
         # > ==========================================================================================================
-        base.scene :error, { level: :error, mask: { clr: :red }, payload: [[:mask, ' [%{subject}] '], :__data__, :mask] } do |data,*args|
+        base.scene :error, { level: :error, mask: { clr: :red }, payload: [[:mask, ' [%{subject}] '], :__data__, :mask] } do |data, *args|
           subject, opts = _scene_subject_with_opts(args, 'Error')
           self.log data, _scene_opt(:error, { subject: subject }, opts)
         end
@@ -352,6 +352,32 @@ module RubySmart
           end
 
           true
+        end
+
+        # model method
+        # log level @ error/success/info
+        # prints: ActiveRecord::Base related data, depending on the models "save" state (also shows possible errors)
+        base.scene :model do |model, opts = {}|
+          # build model-logging string
+          mdl_string = "#{model.id.present? ? "##{model.id} - " : ''}#{model.to_s[0..49]}"
+
+          # resolve model's status
+          status = ((model.persisted? && model.errors.empty?) ? (model.previous_changes.blank? ? :skipped : :success) : :error)
+
+          # switch between status
+          case status
+          when :success
+            # show verbose logging for updated records
+            if opts[:verbose] != false && !model.previously_new_record?
+              log(:success, "#{mdl_string} (#{model.previous_changes.inspect})", tag: "#{model.class.name.upcase}|UPDATED")
+            else
+              log(:success, mdl_string, tag: "#{model.class.name.upcase}|#{(model.previously_new_record? ? 'CREATED' : 'UPDATED')}")
+            end
+          when :error
+            log(:error, "#{mdl_string} (#{model.errors.full_messages.join(', ').presence || '-'})", tag: "#{model.class.name.upcase}|ERROR")
+          else
+            log(:info, mdl_string, tag: "#{model.class.name.upcase}|#{status}")
+          end
         end
       end
     end

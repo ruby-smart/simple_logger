@@ -8,7 +8,7 @@ Gem::Specification.new do |spec|
   spec.authors     = ['Tobias Gonsior']
   spec.email       = ['info@ruby-smart.org']
 
-  spec.summary               = "A simple, multifunctional logging library for Ruby."
+  spec.summary               = "A simple, multifunctional logging library for Ruby (and Rails)."
   spec.description = <<~DESC
     RubySmart::SimpleLogger is a fast, customizable logging library with multi-device support, 
     special (PRE-defined) scenes for better logging visibility.
@@ -33,7 +33,7 @@ Gem::Specification.new do |spec|
 
   spec.require_paths = ['lib']
 
-  spec.add_dependency 'ruby_smart-support', '~> 1.2'
+  spec.add_dependency 'ruby_smart-support', '~> 1.5'
 
   spec.add_development_dependency 'awesome_print', '~> 1.9'
   spec.add_development_dependency 'coveralls_reborn', '~> 0.25'

@@ -13,17 +13,25 @@ module RubySmart
             # @option [String] :char - the character to be used as mask
             # @option [Integer] :length - the mask length (amount of mask chars be line)
             # @option [Symbol] :clr - the color to be used by printing the mask
-            self.mask = { char: '=', length: 100, clr: :blue }
+            self.mask = { char: '=', length: 120, clr: :blue }
           end
         end
 
         module ClassMethods
           def mask
-            class_variable_get('@@mask')
+            @mask
           end
 
           def mask=(mask)
-            class_variable_set('@@mask', mask)
+            @mask = mask
+          end
+
+          # prevents to overwrite parent class through inheriting subclasses
+          def inherited(subclass)
+            super
+
+            # dup existing values
+            subclass.mask = self.mask.dup
           end
         end
 

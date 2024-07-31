@@ -3,21 +3,15 @@
 module RubySmart
   module SimpleLogger
     module Devices
-      class MemoryDevice
-        attr_reader :logs
+      class NullDevice
         attr_reader :status
 
         def initialize
-          @logs   = []
           @status = true
         end
 
-        # adds data to the logs
-        # @param [Object] data
-        def write(data)
-          return false unless status
-
-          @logs << data
+        def write(*)
+          nil
         end
 
         alias_method :<<, :write
@@ -34,7 +28,13 @@ module RubySmart
 
         # clears all logs
         def clear!
-          @logs = []
+          nil
+        end
+
+        # returns logs
+        # @return [Array] logs
+        def logs
+          []
         end
       end
     end

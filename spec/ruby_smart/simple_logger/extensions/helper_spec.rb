@@ -77,6 +77,43 @@ RSpec.describe "Helper extension" do
         expect(logger.logdev.dev).to be_a ::File
         expect(logger.logdev.dev.path).to eq 'log/ruby_smart/simple_logger.log'
       end
+
+      it 'uses logger' do
+        l = ::Logger.new(STDERR)
+        logger = RubySmart::SimpleLogger.new l
+        expect(logger.logdev).to eq l.instance_variable_get(:@logdev).dev
+      end
+
+      it 'uses null' do
+        logger = RubySmart::SimpleLogger.new :null
+        expect(logger.logdev).to be_a RubySmart::SimpleLogger::Devices::NullDevice
+      end
+
+      it 'uses debugger' do
+        expect{
+          RubySmart::SimpleLogger.new :debugger
+        }.to raise_error("Unable to build SimpleLogger with 'debugger' builtin for not initialized Debugger!")
+
+        stub_const '::Debugger', Class.new
+        Debugger.class_eval do
+          def self.logger
+            @logger ||= ::Logger.new(STDERR)
+          end
+
+          def self.handler
+            nil
+          end
+        end
+
+        logger = RubySmart::SimpleLogger.new :debugger
+        expect(logger.logdev).to eq Debugger.logger.instance_variable_get(:@logdev).dev
+      end
+
+      it 'NOT uses rails' do
+        expect{
+          RubySmart::SimpleLogger.new :rails
+        }.to raise_error("Unable to build SimpleLogger with 'rails' builtin for not initialized rails application!")
+      end
     end
   end
 

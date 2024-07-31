@@ -1,5 +1,15 @@
 # RubySmart::SimpleLogger - CHANGELOG
 
+## [1.4.0] - 2024-07-31
+* **[add]** 'null'-device / builtin
+* **[add]** 'debugger'-builtin to send logs to the debugging gem
+* **[add]** new logging method `model` _(for rails applications only)_
+* **[ref]** `nil`-builtin to detect `Debugger` after checking for stdout
+* **[ref]** `mask`-length to 120 _(was 100 by default)_
+* **[ref]** `ruby_smart-support`-gem dependency to 1.5
+* **[fix]** exception _(to build a new device)_ if a Logger was provided
+* **[fix]** mask-reference manipulation on inherited classes
+
 ## [1.3.0] - 2023-08-15
 * **[add]** exception message within `processed`-scene
 * **[add]** new logging option `tag`, to prefix a log-string with a [TAG]

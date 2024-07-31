@@ -9,7 +9,7 @@
 [![Coverage Status](https://coveralls.io/repos/github/ruby-smart/simple_logger/badge.svg?branch=main&kill_cache=1)](https://coveralls.io/github/ruby-smart/simple_logger?branch=main)
 [![Tests](https://github.com/ruby-smart/simple_logger/actions/workflows/ruby.yml/badge.svg)](https://github.com/ruby-smart/simple_logger/actions/workflows/ruby.yml)
 
-A simple, multifunctional logging library for Ruby.
+A simple, multifunctional logging library for Ruby (and Rails).
 It features a fast, customizable logging with multi-device support (e.g. log to STDOUT AND file).
 Special (PRE-defined) scenes can be used for interactive CLI and better logging visibility.
 
@@ -36,7 +36,7 @@ Or install it yourself as:
 ## Enhancements
 * PRE-defined scenes to fastly create a simple, structured CLI output. _(see [Scenes](#scenes))_
 * Better log-visibility with masked output through scenes
-* ```awesome_print``` gem compatibility for a prettified object debug
+* `awesome_print` gem compatibility for a prettified object debug
 * Multi-device support (write to logfile & to STDOUT & to ... & to ...)
 * 'klass_logger' instances for easier access _(see [klass_logger](#klass_logger_Usage))_
 
@@ -198,10 +198,11 @@ While you can just build a new logger _(or use the klass_logger)_ without any ar
 
 ### nil Builtin
 
-A ```nil``` builtin will auto-detect the best logging solution for you.
-For CLI or windowed programs it'll just send the logs to ```STDOUT```.
-For rails-applications it'll send to the current ```Rails.logger``` instance.
-Otherwise it'll store logs temporary in memory _(accessible through the #logs method)_
+A `nil` builtin will auto-detect the best logging solution for you:
+* For CLI or windowed programs it'll just send the logs to `STDOUT`.
+* For Debugging _(e.g. IDE-related debugging gems)_ it'll send the logs to the `Debugger`.
+* For rails-applications it'll send to the current `Rails.logger` instance.
+* Otherwise it'll store logs temporary in memory _(accessible through the #logs method)_
 
 **Example:**
 ```ruby
@@ -211,7 +212,7 @@ logger.debug "some debug"
 
 ### stdout / stderr Builtin
 
-A ```:stdout / :stderr``` builtin will send to ```STDOUT / STDERR``` and uses a colored output by default.
+A `:stdout / :stderr` builtin will send to `STDOUT / STDERR` and uses a colored output by default.
 
 **Example:**
 ```ruby
@@ -224,9 +225,34 @@ logger = ::SimpleLogger.new(:stdout)
 logger.debug "some debug"
 ```
 
+### debugger Builtin
+
+A `:debugger` builtin will send to the `Debugger` (e.g. your IDE's debugging gem)
+
+**Example:**
+```ruby
+logger = ::SimpleLogger.new(:debugger)
+
+# > will be shown within your debugging gem
+logger.debug "some debug"
+```
+
+
+### null Builtin
+
+A `:null` builtin will silently swallow all logging data (so it will not be send).
+
+**Example:**
+```ruby
+logger = ::SimpleLogger.new(:null)
+
+# >
+logger.debug "some debug"
+```
+
 ### rails Builtin
 
-A ```:rails``` builtin will always send to the ```Rails.logger``` instance.
+A `:rails` builtin will always send to the `Rails.logger` instance.
 
 **Example:**
 ```ruby
@@ -238,9 +264,9 @@ logger.debug "some debug"
 
 ### proc Builtin
 
-A ```:proc``` builtin will call the provided proc _(through ```options[:proc]```)_ everytime a log will be written.
+A `:proc` builtin will call the provided proc _(through `options[:proc]```)_ everytime a log will be written.
 
-The data will be provided as array _( ```[severity, time, progname, data]``` )_.
+The data will be provided as array _( `[severity, time, progname, data]` )_.
 
 **Example:**
 ```ruby
@@ -255,7 +281,7 @@ logger.debug "some debug"
 
 ### memory Builtin
 
-A ```:memory``` builtin will always store the logged data within an _instance variable_ and can be accessed through the ```#logs``` or ```#logs_to_h``` methods.
+A `:memory` builtin will always store the logged data within an _instance variable_ and can be accessed through the `#logs` or `#logs_to_h` methods.
 
 **Example:**
 ```ruby
@@ -276,7 +302,7 @@ logger.logs
 
 ### String Builtin
 
-Providing a ```String``` will always create and write to a new logfile.
+Providing a `String` will always create and write to a new logfile.
 
 **Example:**
 ```ruby
@@ -313,7 +339,7 @@ noformat_logger.debug "some debug without color and mask - uses the default form
 
 ### Module Builtin
 
-Providing a ```module``` will also create and write to a new logfile.
+Providing a `module` will also create and write to a new logfile.
 The path depends on the provided module name.
 
 **Example:**
@@ -331,13 +357,13 @@ logger.debug "some debug"
 
 ### other Builtin
 
-Providing any other Object must respond to ```#write```.
+Providing any other Object must respond to `#write```.
 
 -----
 
 ## Formats
 
-The default formatter _(if no other was provided through ```opts[:formatter```)_ will provide the following PRE-defined formats:
+The default formatter _(if no other was provided through `opts[:formatter```)_ will provide the following PRE-defined formats:
 _Also prints a colored output by default._
 
 ### default Format
@@ -447,7 +473,7 @@ logger = ::SimpleLogger.new(:stdout, payload: false)
 ### format
 
 Provide a other format.
-Possible values: ```:default, :passthrough, :plain, :memory, :datalog```
+Possible values: `:default, :passthrough, :plain, :memory, :datalog```
 ```ruby
 logger = ::SimpleLogger.new(format: :default)
 logger = ::SimpleLogger.new(:memory, format: :passthrough)
@@ -465,7 +491,7 @@ logger.debug "debug 2"
 
 ### proc _(:proc-builtin ONLY)_
 
-Provide a callback for the ```:proc``` builtin.
+Provide a callback for the `:proc` builtin.
 ```ruby
 logger = ::SimpleLogger.new(:proc, proc: lambda{|data| ... })
 ```
@@ -528,7 +554,7 @@ logger.debug({a: {custom: 'object'}})
 
 ### inspector
 
-Provide a other ```inspector``` method for the data-debug.
+Provide a other `inspector` method for the data-debug.
 
 ```ruby
 logger = ::SimpleLogger.new(inspector: :to_s)
@@ -541,13 +567,13 @@ logger.debug({ a: 1, b: 2 })
 
 ## _defaults_
 
-Device default options are still available: ```shift_age, shift_size, progname, datetime_format, shift_period_suffix, binmode```
+Device default options are still available: `shift_age, shift_size, progname, datetime_format, shift_period_suffix, binmode```
 
 -----
 
 ## Scenes
 
-The following PRE-defined scenes are available. _(You can define your own scenes by using the class method ```.scene```)_
+The following PRE-defined scenes are available. _(You can define your own scenes by using the class method `.scene```)_
 
 ### debug(data, subject = 'Debug')
 ```ruby
@@ -768,6 +794,7 @@ end
 - line
 - print
 - nl
+- model _(rails only)_
 
 -----
 
@@ -784,7 +811,7 @@ This project is intended to be a safe, welcoming space for collaboration, and co
 
 The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
 
-A copy of the [LICENSE](docs/LICENSE.txt) can be found @ the docs.
+A copy of the [LICENSE](LICENSE.txt) can be found @ the docs.
 
 ## Code of Conduct
 

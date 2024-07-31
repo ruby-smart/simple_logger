@@ -71,7 +71,23 @@ RSpec.describe RubySmart::SimpleLogger::Logger do
   describe '#mask' do
     it 'has a default mask' do
       logger = RubySmart::SimpleLogger.new :stdout
-      expect(logger.mask).to eq({char:"=", length: 100, clr: :blue})
+      expect(logger.mask).to eq({char:"=", length: 120, clr: :blue})
+    end
+
+    it 'dups mask data' do
+      class MyCustomLogger < RubySmart::SimpleLogger::Logger
+
+      end
+
+      ::MyCustomLogger.mask[:char] = '-'
+      expect(::MyCustomLogger.mask[:char]).to eq '-'
+      expect(::MyCustomLogger.mask).to_not eq(RubySmart::SimpleLogger::Logger.mask)
+
+      logger = ::MyCustomLogger.new :stdout
+      expect(logger.mask).to eq(::MyCustomLogger.mask)
+      logger.mask(clr: :green)
+      expect(logger.mask).to eq({char:"-", length: 120, clr: :green})
+      expect(logger.mask).to_not eq(::MyCustomLogger.mask)
     end
   end
 end
