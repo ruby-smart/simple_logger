@@ -370,19 +370,6 @@ module RubySmart
             res_or_clr.to_sym
           end
         end
-
-        # resolves subject & opts from provided args.
-        # returns provided default subject, if not in args.
-        # @param [Object] args
-        # @param [String] subject
-        # @return [Array]
-        def _scene_subject_with_opts(args, subject = '')
-          if args[0].is_a?(Hash)
-            [subject, args[0]]
-          else
-            [args[0] || subject, args[1] || {}]
-          end
-        end
       end
     end
   end

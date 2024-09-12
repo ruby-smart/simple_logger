@@ -365,4 +365,46 @@ RSpec.describe RubySmart::SimpleLogger::Scenes do
       expect(logs).to include("╟┄[\e[46mCLEANUP\e[0m] totally failed")
     end
   end
+
+  describe 'model' do
+    it 'logs create' do
+      expect {
+        spec_log_result(:model, Dummy::Model.new(:create)) do |res|
+          res << "\e[1;32m======================================================= [Success] ======================================================\e[0m\n[\e[46mDUMMY::MODEL|CREATED\e[0m] A dummy model\n\e[1;32m========================================================================================================================\e[0m\n"
+        end
+      }.to change { @log_result }
+    end
+
+    it 'logs verbose update' do
+      expect {
+        spec_log_result(:model, Dummy::Model.new(:update)) do |res|
+          res << "\e[1;32m======================================================= [Success] ======================================================\e[0m\n[\e[46mDUMMY::MODEL|UPDATED\e[0m] #4711 - A dummy model (\"some changes\")\n\e[1;32m========================================================================================================================\e[0m\n"
+        end
+      }.to change { @log_result }
+    end
+
+    it 'logs minimized update' do
+      expect {
+        spec_log_result(:model, Dummy::Model.new(:update), verbose: false) do |res|
+          res << "\e[1;32m======================================================= [Success] ======================================================\e[0m\n[\e[46mDUMMY::MODEL|UPDATED\e[0m] #4711 - A dummy model\n\e[1;32m========================================================================================================================\e[0m\n"
+        end
+      }.to change { @log_result }
+    end
+
+    it 'logs error' do
+      expect {
+        spec_log_result(:model, Dummy::Model.new(:error)) do |res|
+          res << "\e[1;31m======================================================== [Error] =======================================================\e[0m\n[\e[46mDUMMY::MODEL|ERROR\e[0m] #4711 - A dummy model (a, full, message, string)\n\e[1;31m========================================================================================================================\e[0m\n"
+        end
+      }.to change { @log_result }
+    end
+
+    it 'logs skipped' do
+      expect {
+        spec_log_result(:model, Dummy::Model.new(:skipped)) do |res|
+          res << "\e[1;36m======================================================== [Info] ========================================================\e[0m\n[\e[46mDUMMY::MODEL|SKIPPED\e[0m] #4711 - A dummy model\n\e[1;36m========================================================================================================================\e[0m\n"
+        end
+      }.to change { @log_result }
+    end
+  end
 end

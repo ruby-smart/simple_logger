@@ -1,5 +1,11 @@
 # RubySmart::SimpleLogger - CHANGELOG
 
+## [1.5.0] - 2024-09-12
+* **[add]** `SimpleLogger.scene?`-method to check for registered scene options
+* **[ref]** scene options to **keyword**-args _(**WARNING:** This may break existing calls to the scene methods)_
+* **[fix]** `model` scene not calling related scene methods
+* **[fix]** `subject` parameter for default severity-methods not cast as string _(now any object may be provided - which calls `#to_s` method)_
+
 ## [1.4.0] - 2024-07-31
 * **[add]** 'null'-device / builtin
 * **[add]** 'debugger'-builtin to send logs to the debugging gem

@@ -258,26 +258,4 @@ RSpec.describe "Helper extension" do
       }.to raise_exception RuntimeError, "Unable to build SimpleLogger! The provided device 'logdev' must respond to 'write'!"
     end
   end
-
-  describe '#_scene_subject_with_opts' do
-    it 'returns default' do
-      expect(@logger.send(:_scene_subject_with_opts, [], 'Default')).to eq ['Default', {}]
-    end
-
-    it 'returns subject' do
-      expect(@logger.send(:_scene_subject_with_opts, ['Custom'], 'Default')).to eq ['Custom', {}]
-    end
-
-    it 'returns opts' do
-      expect(@logger.send(:_scene_subject_with_opts, [{lvl: :debug}], 'Default')).to eq ['Default',{lvl: :debug}]
-    end
-
-    it 'returns subject with opts' do
-      expect(@logger.send(:_scene_subject_with_opts, ['Custom', {lvl: :debug}], 'Default')).to eq ['Custom',{lvl: :debug}]
-    end
-
-    it 'returns skipped with opts' do
-      expect(@logger.send(:_scene_subject_with_opts, [nil, {lvl: :debug}], 'Default')).to eq ['Default',{lvl: :debug}]
-    end
-  end
 end

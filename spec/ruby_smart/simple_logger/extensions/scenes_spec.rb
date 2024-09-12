@@ -30,8 +30,8 @@ RSpec.describe "Scenes extension" do
       expect(res).to eq true
 
       # restore orig
-      RubySmart::SimpleLogger::Logger.scene :unknown, { level: :unknown, mask: { clr: :gray }, payload: [[:mask, ' [%{subject}] '], :__data__, :mask] } do |data, subject = 'Unknown', opts = {}|
-        self.log data, _scene_opt(:unknown, { subject: subject }, opts)
+      RubySmart::SimpleLogger::Logger.scene :unknown, { level: :unknown, mask: { clr: :gray }, payload: [[:mask, ' [%{subject}] '], :__data__, :mask] } do |data, subject = 'Unknown', **opts|
+        self.log data, _scene_opts(:unknown, subject: subject, **opts)
       end
     end
 
@@ -53,17 +53,27 @@ RSpec.describe "Scenes extension" do
     end
   end
 
-  describe '#_scene_opt' do
+  describe '#_scene_opts' do
     before :all do
       @logger = RubySmart::SimpleLogger.new
     end
 
     it 'resolves scene options' do
-      expect(@logger.send(:_scene_opt, :info)).to eq({ level: :info, mask: { clr: :cyan }, payload: [[:mask, ' [%{subject}] '], :__data__, :mask] })
+      expect(@logger.send(:_scene_opts, :info)).to eq({ level: :info, mask: { clr: :cyan }, payload: [[:mask, ' [%{subject}] '], :__data__, :mask] })
     end
 
     it 'merges scene options' do
-      expect(@logger.send(:_scene_opt, :info, payload: [:_data], sub: :ject)).to eq({ level: :info, mask: { clr: :cyan }, payload: [:_data], sub: :ject })
+      expect(@logger.send(:_scene_opts, :info, payload: [:_data], sub: :ject)).to eq({ level: :info, mask: { clr: :cyan }, payload: [:_data], sub: :ject })
+    end
+  end
+
+  describe '.scene?' do
+    it 'returns true' do
+      expect(RubySmart::SimpleLogger::Logger.scene?(:info)).to eq true
+    end
+
+    it 'returns false' do
+      expect(RubySmart::SimpleLogger::Logger.scene?(:unknown_scene)).to eq false
     end
   end
 end

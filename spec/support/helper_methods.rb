@@ -1,15 +1,15 @@
 # frozen_string_literal: false
 
-def spec_log_result(method, *args, &block)
+def spec_log_result(method, *args, **kwargs, &block)
   # clear all logs before
   @logger.logdev.clear!
 
   if args[0] == :_
     @logger.send(method)
   elsif args.count == 0
-    @logger.send(method, 'example')
+    @logger.send(method, 'example', **kwargs)
   else
-    @logger.send(method, *args)
+    @logger.send(method, *args, **kwargs)
   end
 
   res = @logger.logs.join

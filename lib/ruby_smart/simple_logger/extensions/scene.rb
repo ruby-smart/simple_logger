@@ -27,6 +27,13 @@ module RubySmart
             class_variable_set('@@scenes', scenes)
           end
 
+          # returns true, if provided *key* is a registered scene option
+          # @param [Symbol] key
+          # @return [Boolean]
+          def scene?(key)
+            scenes.key?(key)
+          end
+
           # registers a new scene by provided key & options
           # also defines this method by provided block
           #
@@ -64,11 +71,14 @@ module RubySmart
 
           private
 
-          # resolves scene options by provided key & merges them with additional options
+          # resolves scene options by provided key & merges them with additional *opts*
           # @param [Symbol] key
           # @param [Array<Hash>] opts
-          def _scene_opt(key, *opts)
-            _opt((scenes[key] || {}), *opts)
+          def _scene_opts(key, **opts)
+            {
+              **(scenes[key] || {}),
+              **opts
+            }
           end
         end
       end
