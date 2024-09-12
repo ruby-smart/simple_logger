@@ -32,8 +32,8 @@ module RubySmart
         @klass_logger = nil
       end
 
-      def method_missing(name, *args, &block)
-        return self.klass_logger.send(name, *args, &block) if self.klass_logger.respond_to? name
+      def method_missing(name, *args, **kwargs, &block)
+        return self.klass_logger.send(name, *args, **kwargs, &block) if self.klass_logger.respond_to? name
         super
       end
 

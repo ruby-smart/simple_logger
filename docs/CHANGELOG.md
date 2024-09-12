@@ -1,5 +1,8 @@
 # RubySmart::SimpleLogger - CHANGELOG
 
+## [1.5.1] - 2024-09-12
+* **[fix]** `RubySmart::SimpleLogger::KlassLogger` not forwarding kwargs
+
 ## [1.5.0] - 2024-09-12
 * **[add]** `SimpleLogger.scene?`-method to check for registered scene options
 * **[ref]** scene options to **keyword**-args _(**WARNING:** This may break existing calls to the scene methods)_

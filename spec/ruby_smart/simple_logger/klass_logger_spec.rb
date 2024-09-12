@@ -45,6 +45,28 @@ RSpec.describe RubySmart::SimpleLogger::KlassLogger do
       expect(Dummy::Logger.debug(:debug)).to be true
     end
 
+
+    describe 'delegates error' do
+      it 'calls error' do
+        expect(Dummy::Logger.error("some test")).to eq true
+      end
+
+      it 'calls error with subject & opts' do
+        expect(Dummy::Logger.error("some test", "subject", payload: false)).to eq true
+      end
+
+
+      it 'calls error with opts only' do
+        expect(Dummy::Logger.error("some test", payload: false)).to eq true
+      end
+
+      it 'calls error with exception' do
+        expect{
+          Dummy::Logger.error("some test", "subject", "other param", payload: false)
+        }.to raise_error(ArgumentError)
+      end
+    end
+
     it 'delegates other methods' do
       expect{
         Dummy::Logger.unknown_method
