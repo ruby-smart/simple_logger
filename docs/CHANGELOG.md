@@ -1,5 +1,8 @@
 # RubySmart::SimpleLogger - CHANGELOG
 
+## [1.5.2] - 2024-09-12
+* **[fix]** swap 'verbose' logging for `model` scene _(now uses FALSE by default)_
+
 ## [1.5.1] - 2024-09-12
 * **[fix]** `RubySmart::SimpleLogger::KlassLogger` not forwarding kwargs
 

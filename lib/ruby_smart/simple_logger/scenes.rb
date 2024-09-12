@@ -361,7 +361,7 @@ module RubySmart
           case status
           when :success
             # show verbose logging for updated records
-            if opts[:verbose] != false && !model.previously_new_record?
+            if opts[:verbose] && !model.previously_new_record?
               self.success("#{mdl_string} (#{model.previous_changes.inspect})", tag: "#{model.class.name.upcase}|UPDATED", **opts)
             else
               self.success(mdl_string, tag: "#{model.class.name.upcase}|#{(model.previously_new_record? ? 'CREATED' : 'UPDATED')}", **opts)
