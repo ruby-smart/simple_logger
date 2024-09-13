@@ -39,7 +39,12 @@ module RubySmart
       attr_reader :logdev
 
       # defines a uniq key to parse the data
+      # @return [Symbol]
       PAYLOAD_DATA_KEY = :__data__
+
+      # defines a regexp to replace colors in string
+      # @return [Regexp]
+      COLOR_REPLACE_REGEXP = /\e\[[\d;]+m?/
 
       # initializes a new Logger
       #

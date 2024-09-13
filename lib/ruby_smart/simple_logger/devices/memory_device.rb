@@ -16,6 +16,7 @@ module RubySmart
         # @param [Object] data
         def write(data)
           return false unless status
+          return false unless data
 
           @logs << data
         end

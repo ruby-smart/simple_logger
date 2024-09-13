@@ -53,21 +53,19 @@ module RubySmart
               # prevent logging nil data
               return false if data.nil?
 
-              add level, _parse_data(data, opts)
+              add level, _payload(:data, data, opts)
               return true
             end
 
             # create a default payload, if nothing was provided
-            # :_ -> alias for log data
             opts[:payload] ||= [self.class::PAYLOAD_DATA_KEY]
 
             # create a default mask, if nothing was provided
             opts[:mask] ||= self.mask
 
-            # create payloads and log each payload
-            # returns the payload boolean result
-            _payloads(opts.delete(:payload), opts, data) do |p|
-              add level, p
+            # split payload into single  lines
+            each_payload(opts, data) do |payload|
+              add level, payload
             end
 
             # returns true as logging result
@@ -104,29 +102,26 @@ module RubySmart
 
           private
 
-          # parses each payload and creates a callback
-          #
-          # @param [Array] payloads
+          # parses and yields each payload
           # @param [Hash] opts
           # @param [Object] data
-          def _payloads(payloads, opts, data)
-            payloads.each do |payload|
-              # IMPORTANT: Do NOT remove this - prevents frozen string literal problem on other file sources
-              str = ''
+          def each_payload(opts, data)
+            opts[:payload].each do |payload|
               if payload == self.class::PAYLOAD_DATA_KEY
-                # checks, if we should inspect the data
-                str << _parse_inspect_data(data, opts)
+                yield _payload(:data, _parse_data(data, opts), opts)
               else
-                str << _parse_payload(payload, opts)
+                yield _payload(:mask, _parse_payload(payload, opts), opts)
               end
-
-              # always append newline - except it is forced excluded
-              str << "\n" if opts[:nl] != false
-
-              yield str
             end
+          end
 
-            true
+          # builds and returns a +Payload+
+          # @param [Symbol] type
+          # @param [Object] data
+          # @param [Hash] opts
+          # @return [RubySmart::SimpleLogger::Payload]
+          def _payload(type, data, opts)
+            Payload.build(data, type:, nl: opts[:nl])
           end
 
           # parses the provided data to string.
@@ -140,20 +135,12 @@ module RubySmart
           def _parse_data(data, opts)
             _pcd(
               _tagged(
-                data.to_s,
+                _clr(
+                  _inspect(data, opts),
+                  opts[:clr]
+                ),
                 opts[:tag]
               ),
-              opts
-            )
-          end
-
-          # parses the provided data to string, but calls a possible inspect method.
-          # @param [Object] data
-          # @param [Hash] opts
-          # @return [String] stringified data
-          def _parse_inspect_data(data, opts)
-            _parse_data(
-              data.send(opts[:inspect] ? (opts[:inspector] || self.inspector) : :to_s),
               opts
             )
           end
@@ -188,7 +175,7 @@ module RubySmart
               txt = _parse_payload({ _txt: fraction }, opts)
 
               # clean possible colored text - sucks but necessary :(
-              txt.gsub!(/\e\[[\d;]+m?/, '')
+              txt.gsub!(self.class::COLOR_REPLACE_REGEXP, '')
 
               # check for provided txt length - this will decide if it's a full-line mask
               if txt.length == 0
@@ -230,20 +217,12 @@ module RubySmart
           # @param [Hash] opts
           # @return [String] parsed txt
           def _parse_opts(str, opts = {})
-            mask           = opts[:mask] || { length: 0 }
-            str            = str.to_s
-            txt            = str.dup
+            # EDGE-CASE for *subject* (which is commonly used in SL headers)
+            # prevent subject being parsed longer as the mask#length
+            opts[:subject] = opts[:subject].to_s[0, (opts[:mask][:length] - 4 - opts[:mask][:char].length * 2)] if opts[:subject] && opts[:mask] && opts[:mask][:length] && opts[:subject].to_s.length > opts[:mask][:length]
 
-            # SPECIAL: prevent subject being parsed longer as the mask#length
-            opts[:subject] = opts[:subject].to_s[0, (mask[:length] - 4 - mask[:char].length * 2)] if opts[:subject] && mask[:length] && opts[:subject].to_s.length > mask[:length]
-
-            str.scan(/%\{(\w+)\}/) do |mm|
-              next unless mm.length > 0 && mm[0]
-              m = mm[0].to_sym
-              txt.gsub!("%{#{m}}", (opts[m] ? opts[m].to_s : ''))
-            end
-
-            txt
+            # replace wildcards and return new string
+            str.to_s % opts
           end
         end
       end

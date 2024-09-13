@@ -5,6 +5,7 @@ require "gem_info"
 require_relative "simple_logger/core_ext/ruby/string"
 require_relative "simple_logger/version"
 require_relative "simple_logger/logger"
+require_relative "simple_logger/payload"
 require_relative "simple_logger/klass_logger"
 
 module RubySmart

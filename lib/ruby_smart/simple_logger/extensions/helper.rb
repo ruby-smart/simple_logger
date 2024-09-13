@@ -32,7 +32,7 @@ module RubySmart
           # disable mask color if explicit disabled
           self.mask(clr: false) if opts[:clr] == false
 
-          # reduce mask-size to window size
+          # reduce mask-size to window size, if too large
           if ::ThreadInfo.windowed? && ::ThreadInfo.winsize[1] < self.mask[:length]
             self.mask(length: ::ThreadInfo.winsize[1])
           end
@@ -115,12 +115,6 @@ module RubySmart
           # set default format
           opts[:format] ||= :plain
 
-          # fix nl - which depends on other opts
-          opts[:nl]  = _nl(opts)
-
-          # fix clr
-          opts[:clr] = true if opts[:clr].nil?
-
           ::RubySmart::SimpleLogger::Formatter.new(opts)
         end
 
@@ -163,14 +157,13 @@ module RubySmart
           when :proc
             # force overwrite opts
             @ignore_payload = true
-            opts[:nl]       = false
             opts[:format]   = :passthrough
 
             ::RubySmart::SimpleLogger::Devices::ProcDevice.new(opts.delete(:proc))
           when :memory
             # force overwrite opts
-            @ignore_payload = true
-            opts[:format]   = :memory
+            # @ignore_payload = true
+            opts[:format] = :memory
             # no color logging for memory devices
             opts[:clr] = false
 
@@ -195,8 +188,6 @@ module RubySmart
 
           # if existing device is already writeable, simply return it
           return device if device.respond_to?(:write)
-
-          file_location = nil
 
           # resolve the file_location from provided device
           case device
@@ -255,16 +246,6 @@ module RubySmart
           word
         end
 
-        # returns the +nl+ (new line) flag, depending on the provided options.
-        # recognizes +:nl+ and +:payload+ options.
-        # @param [Hash] opts
-        # @return [Boolean]
-        def _nl(opts)
-          return opts[:nl] unless opts[:nl].nil?
-
-          opts[:payload].is_a?(FalseClass)
-        end
-
         # merge all provided hashes into one single hash
         #
         # @example
@@ -300,6 +281,14 @@ module RubySmart
           return str if tag.nil? || ignore_tagged?
 
           "#{"[#{tag.to_s.upcase.bg_cyan}]"} #{str}"
+        end
+
+        # parses the provided data to string, but calls a possible inspect method.
+        # @param [Object] data
+        # @param [Hash] opts
+        # @return [String] stringified data
+        def _inspect(data, opts)
+          data.send(opts[:inspect] ? (opts[:inspector] || self.inspector) : :to_s)
         end
 
         # colorizes a provided string
@@ -356,19 +345,65 @@ module RubySmart
         #   > :yellow
         #
         #   _res_clr('not_really_a_color')
-        #   > :not_really_a_color
+        #   > :green
         #
-        # @param [Boolean, String, Integer, Symbol] res_or_clr
+        # @param [Boolean, String, Integer, Symbol] res
         # @return [Symbol] color
-        def _res_clr(res_or_clr)
-          case res_or_clr
-          when true, 1, '1'
+        def _res_clr(res)
+          case res
+          when true, 'true', 1, '1'
             :green
-          when false, 0, '0'
+          when false, 'false', 0, '0', ''
             :red
+          when '-', nil
+            :yellow
+          when String
+            :green
+          when Symbol
+            res
           else
-            res_or_clr.to_sym
+            :grey
           end
+        end
+
+        def _cur_erase(length = 1)
+          _cur_left(length) + (' ' * length) + _cur_left(length)
+        end
+
+        def _cur_new_line
+          "\n"
+        end
+
+        def _cur_beginning_of_line
+          "\r"
+        end
+
+        def _cur_erase_line
+          "#{_cur_beginning_of_line}#{_cur_erase_end_of_line}#{_cur_beginning_of_line}"
+        end
+
+        def _cur_erase_end_of_line
+          "\033[K"
+        end
+
+        def _cur_pos(line, column)
+          "\033[#{line};#{column}H"
+        end
+
+        def _cur_left(length = 1)
+          "\033[#{length}D"
+        end
+
+        def _cur_right(length = 1)
+          "\033[#{length}C"
+        end
+
+        def _cur_up(length = 1)
+          "\033[#{length}A"
+        end
+
+        def _cur_down(length = 1)
+          "\033[#{length}B"
         end
       end
     end

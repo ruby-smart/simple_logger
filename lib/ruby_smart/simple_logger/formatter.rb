@@ -20,24 +20,28 @@ module RubySmart
       # set default formats
       self.formats = {
         # the ruby default's logging format -except the reformatted severity to 7-chars (instead of 5)
-        default: -> (severity, time, progname, data) {
-          _nl data2array(data, false).map { |str|
+        default: -> (severity, time, progname, payload) {
+          _nl(data2array(payload.data, false).map { |str|
             str == '' ? str : _clr(format('%s, [%s #%d] %7s -- %s: ', severity[0], format_datetime(time), $$, severity, progname), severity) + _declr(str)
-          }
+          }, payload.nl?)
         },
 
         # simply 'passthrough' all args, without any formatting
         passthrough: -> (*args) { args },
 
         # just forward the formatted data, without any other args (no severity, time, progname)
-        plain: -> (_severity, _time, _progname, data) { _nl _declr(data.to_s) },
+        # but still de-colorize
+        plain: -> (_severity, _time, _progname, payload) { _nl(_declr(payload.to_s), payload.nl?) },
 
         # specialized array for memory-logging
-        memory: -> (severity, time, _progname, data) { [severity.downcase.to_sym, time, _declr(data)] },
+        memory: -> (severity, time, _progname, payload) {
+          # prevent memory logging, unless payload is a *data* payload
+          payload.is_data? ? [severity.downcase.to_sym, time, _declr(payload.to_s)] : nil
+        },
 
         # specialized string as datalog with every provided data in additional brackets -> [data] [data] [data]
-        datalog: -> (severity, time, _progname, data) {
-          _nl _declr(format('[#%d] [%s] [%s] [%s]', $$, format_datetime(time, true), severity, data2datalog(data)))
+        datalog: -> (severity, time, _progname, payload) {
+          _nl(_declr(format('[#%d] [%s] [%s] [%s]', $$, format_datetime(time, true), severity, data2datalog(payload.data))), payload.nl?)
         }
       }
 
@@ -54,15 +58,16 @@ module RubySmart
       # initialize with options
       # @param [Hash] opts
       # @option opts [Symbol] :format - define other format
-      # @option opts [Boolean] :nl - create newline after each call (default: true)
       # @option opts [Boolean] :clr - colorizes the whole output (default: false)
       def initialize(opts = {})
         # set default opts
-        opts[:nl]     = true if opts[:nl].nil?
         opts[:format] = :default if opts[:format].nil?
 
+        # fix clr
+        opts[:clr]    = true if opts[:clr].nil?
+
         # only store required options
-        @opts = opts.slice(:nl, :format, :clr)
+        @opts = opts.slice(:format, :clr)
       end
 
       # standard call method - used to format provided params
@@ -175,12 +180,12 @@ module RubySmart
       # depends, on the +:nl+ option.
       # @param [String, Array] data
       # @return [String]
-      def _nl(data)
+      def _nl(data, nl = false)
         # convert to string
         data = data.join("\n") if data.is_a?(Array)
 
         # check for +nl+ flag
-        return data unless opts[:nl]
+        return data unless nl
 
         data + "\n"
       end
@@ -205,7 +210,7 @@ module RubySmart
         if opts[:clr] || !str.is_a?(String)
           str
         else
-          str.gsub(/\e\[[\d;]+m/, '')
+          str.gsub(RubySmart::SimpleLogger::Logger::COLOR_REPLACE_REGEXP, '')
         end
       end
     end
