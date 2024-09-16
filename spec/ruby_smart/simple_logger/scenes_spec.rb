@@ -167,6 +167,14 @@ RSpec.describe RubySmart::SimpleLogger::Scenes do
       }.to change { @log_result }
     end
 
+    it '#job with block' do
+      expect {
+        spec_log_result(:job, "job", block: -> { false }) do |res|
+          res << "- \e[1;36mjob                                                             \e[0m => \e[1;31mfalse\e[0m\n"
+        end
+      }.to change { @log_result }
+    end
+
     it '#sub_job' do
       expect {
         spec_log_result(:sub_job, "sub job") do |res|
@@ -175,10 +183,43 @@ RSpec.describe RubySmart::SimpleLogger::Scenes do
       }.to change { @log_result }
     end
 
-    it '#result' do
+
+    it '#sub_job with block' do
+      expect {
+        spec_log_result(:sub_job, "sub job", block: -> { 'OK' }) do |res|
+          res << "  * \e[1;36msub job                                                       \e[0m => \e[1;32mOK\e[0m\n"
+        end
+      }.to change { @log_result }
+    end
+
+    it '#result to false' do
+      expect {
+        spec_log_result(:result, false) do |res|
+          res << "\e[1;31mfalse\e[0m\n"
+        end
+      }.to change { @log_result }
+    end
+
+    it '#result to true' do
+      expect {
+        spec_log_result(:result, true) do |res|
+          res << "\e[1;32mtrue\e[0m\n"
+        end
+      }.to change { @log_result }
+    end
+
+    it '#result with status' do
       expect {
         spec_log_result(:result, "fail", false) do |res|
           res << "\e[1;31mfail\e[0m\n"
+        end
+      }.to change { @log_result }
+    end
+
+    it '#result with color' do
+      expect {
+        spec_log_result(:result, "skipped", :yellow) do |res|
+          res << "\e[1;33mskipped\e[0m\n"
         end
       }.to change { @log_result }
     end
@@ -243,7 +284,13 @@ RSpec.describe RubySmart::SimpleLogger::Scenes do
       }.to change { @log_result }
     end
 
-    it '#spec unknown' do
+    it '#spec other' do
+      expect {
+        spec_log_result(:spec, nil) do |res|
+          res << "\e[1;33m?\e[0m"
+        end
+      }.to change { @log_result }
+
       expect {
         spec_log_result(:spec, 'unknown') do |res|
           res << "\e[1;33m?\e[0m"

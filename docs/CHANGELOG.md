@@ -1,5 +1,10 @@
 # RubySmart::SimpleLogger - CHANGELOG
 
+## [1.5.3] - 2024-09-16
+* **[fix]** scene `job`-, `sub_job`-methods not working with provided block
+* **[fix]** scene `result`-methods not printing boolean results (also fixes exception for boolean/numeric results)
+* **[fix]** fix color helper `_res_clr`-method to not raise for transforming to symbol
+
 ## [1.5.2] - 2024-09-12
 * **[fix]** swap 'verbose' logging for `model` scene _(now uses FALSE by default)_
 

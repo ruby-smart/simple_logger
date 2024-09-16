@@ -142,8 +142,7 @@ module RubySmart
         # > -> Result
         # >
         base.scene :theme_result, { level: :debug, mask: { char: '-', length: 85, clr: :purple }, payload: [:mask, [:txt, '-> %{result}'], ''] } do |result, status = nil, **opts|
-          res_or_clr = status.nil? ? result : status
-          self.log nil, _scene_opts(:theme_result, result: result, clr: _res_clr(res_or_clr), **opts)
+          self.log nil, _scene_opts(:theme_result, result: result, clr: _res_clr(status, result), **opts)
         end
 
         # theme_line method
@@ -174,7 +173,7 @@ module RubySmart
         #     ________________________________________________________________ <- 64 chars
         base.scene :job, { level: :debug, clr: :cyan, nl: false, length: 64, payload: [[:concat, ['- ', [:txt, '%{name}'], ' => ']]] } do |name, **opts, &block|
           self.log nil, _scene_opts(:job, name: name, **opts)
-          self.result(*block.call) if block_given?
+          self.result(*block.call) if block
         end
 
         # sub_job method
@@ -186,7 +185,7 @@ module RubySmart
         #       ______________________________________________________________ <- 62 chars
         base.scene :sub_job, { level: :debug, clr: :cyan, nl: false, length: 62, payload: [[:concat, ['  * ', [:txt, '%{name}'], ' => ']]] } do |name, **opts, &block|
           self.log nil, _scene_opts(:sub_job, name: name, **opts)
-          self.result(*block.call) if block_given?
+          self.result(*block.call) if block
         end
 
         # result method
@@ -195,8 +194,7 @@ module RubySmart
         #
         # > Result
         base.scene :result, { level: :debug, payload: [[:txt, '%{result}']] } do |result, status = nil, **opts|
-          res_or_clr = status.nil? ? result : status
-          self.log nil, _scene_opts(:result, result: result, clr: _res_clr(res_or_clr), **opts)
+          self.log nil, _scene_opts(:result, result: result.to_s, clr: _res_clr(status, result), **opts)
         end
 
         # job_result method
@@ -257,12 +255,13 @@ module RubySmart
         #
         # > .FFF...??...F....F...F..???....F...??
         base.scene :spec, { level: :debug, nl: false, payload: [[:txt, '%{result}']] } do |status, **opts|
-          result = if status.is_a?(TrueClass)
+          result = case status
+                   when true
                      '.'
-                   elsif status.is_a?(FalseClass)
+                   when false
                      'F'
                    else
-                     status = :yellow
+                     status = nil # IMPORTANT: reset to nil will enforce a 'yellow' color
                      '?'
                    end
           self.log nil, _scene_opts(:spec, result: result, clr: _res_clr(status), **opts)
@@ -338,7 +337,7 @@ module RubySmart
             result_str ||= ''
 
             # send END name with result & possible time as +data+ - the full log line is created through the +_pcd+ method.
-            self.log("#{name} #{result_str}#{(timer_key ? "(#{self.timer(:clear, timer_key, humanized: true)})" : '')}", _scene_opts(:processed, **opts, pcd: :end ))
+            self.log("#{name} #{result_str}#{(timer_key ? "(#{self.timer(:clear, timer_key, humanized: true)})" : '')}", _scene_opts(:processed, **opts, pcd: :end))
 
             # reduce level
             processed_lvl(:down)

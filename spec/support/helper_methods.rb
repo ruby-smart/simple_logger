@@ -1,21 +1,21 @@
 # frozen_string_literal: false
 
-def spec_log_result(method, *args, **kwargs, &block)
+def spec_log_result(method, *args, block: nil, **kwargs, &callback)
   # clear all logs before
   @logger.logdev.clear!
 
   if args[0] == :_
     @logger.send(method)
   elsif args.count == 0
-    @logger.send(method, 'example', **kwargs)
+    @logger.send(method, 'example', **kwargs, &block)
   else
-    @logger.send(method, *args, **kwargs)
+    @logger.send(method, *args, **kwargs, &block)
   end
 
   res = @logger.logs.join
 
   ary = []
-  block.call(ary)
+  callback.call(ary)
 
   if ary.join == res
     @log_result << method

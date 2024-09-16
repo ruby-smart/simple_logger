@@ -356,18 +356,24 @@ module RubySmart
         #   > :yellow
         #
         #   _res_clr('not_really_a_color')
-        #   > :not_really_a_color
+        #   > :green
         #
-        # @param [Boolean, String, Integer, Symbol] res_or_clr
+        # @param [Boolean, String, Integer, Symbol] args
         # @return [Symbol] color
-        def _res_clr(res_or_clr)
-          case res_or_clr
-          when true, 1, '1'
+        def _res_clr(*args)
+          case (res = args.compact.first)
+          when true, 'true', 1, '1'
             :green
-          when false, 0, '0'
+          when false, 'false', 0, '0', ''
             :red
+          when '-', nil
+            :yellow
+          when String
+            :green
+          when Symbol
+            res
           else
-            res_or_clr.to_sym
+            :grey
           end
         end
       end
