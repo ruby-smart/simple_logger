@@ -47,24 +47,44 @@ module RubySmart
       # @option args[Symbol,Array] <builtin> - provide a builtin, either a single symbol or array of symbols
       # @option args[Hash] <options> - provide custom options
       def initialize(*args)
+        # transform args to opts
         opts = args.last.is_a?(Hash) ? args.pop : {}
         opts[:builtin] = args if args.length > 0
 
-        # enhance options with device & formatter
-        _opts_device!(opts)
-        _opts_formatter!(opts)
+        # assign logdev to opts
+        assign_logdev!(opts)
 
-        # initialize & set defaults by provided opts
-        _opts_init!(opts)
+        # assign formatter to opts
+        assign_formatter!(opts)
+
+        # assign default opts
+        assign_defaults!(opts)
 
         # initialize with a nil +logdev+ to prevent any nested +LogDevice+ creation.
         # we already arranged device & formatter to be able to respond to ther required methods
         super(nil)
 
-        # set explicit after called super
+        # level must be set through the *_level* method, to prevent invalid values
         self.level = opts[:level]
+
+        # use the provided formatter
         self.formatter = opts[:formatter]
-        @logdev = _logdev(opts)
+
+        # ignore payload and send data directly to the logdev
+        @ignore_payload = true if opts[:payload] == false
+
+        # ignore processed logging and send data without 'leveling' & PCD-char to the logdev
+        @ignore_processed = true if opts[:processed] == false
+
+        # ignore tagged logging and send data without 'tags' to the logdev
+        @ignore_tagged = true if opts[:tagged] == false
+
+        # set custom inspector (used for data inspection)
+        # 'disable' inspector, if false was provided - which simply results in +#to_s+
+        @inspector = (opts[:inspect] == false) ? :to_s : opts[:inspector]
+
+        # set resolved logdev
+        @logdev = opts[:logdev]
       end
 
       # overwrite level setter, to accept every available (also newly defined) Severity

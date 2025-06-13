@@ -13,7 +13,7 @@ module RubySmart
 
         # set / overwrite default opts
         # @param [Hash] opts
-        def _opts_init!(opts)
+        def assign_defaults!(opts)
           # -- level ---------------------------------------------------------------------------------------------------
 
           # initialize a default rails-dependent output
@@ -37,32 +37,17 @@ module RubySmart
             self.mask(length: ::ThreadInfo.winsize[1])
           end
 
-          # -- instance related ----------------------------------------------------------------------------------------
-
-          # ignore payload and send data directly to the logdev
-          @ignore_payload   = true if @ignore_payload.nil? && opts[:payload] == false
-
-          # ignore processed logging and send data without 'leveling' & PCD-char to the logdev
-          @ignore_processed = true if @ignore_processed.nil? && opts[:processed] == false
-
-          # ignore tagged logging and send data without 'tags' to the logdev
-          @ignore_tagged    = true if @ignore_tagged.nil? && opts[:tagged] == false
-
-          # set custom inspector (used for data inspection)
-          # 'disable' inspector, if false was provided - which simply results in +#to_s+
-          @inspector = (opts[:inspect] == false) ? :to_s : opts[:inspector]
-
-          # prevent to return any data
+          # prevent returning any data
           nil
         end
 
-        # enhance provided opts with +:device+.
+        # enhance provided opts with +:logdev+.
         # opts may be manipulated by resolved device
         # does not return any data.
         # @param [Hash] opts
-        def _opts_device!(opts)
-          # check for already existing +device+
-          return if opts[:device]
+        def assign_logdev!(opts)
+          # check for already existing +logdev+
+          return if opts[:logdev]
 
           # remove builtin key from opts and force an array
           builtins = Array(opts.delete(:builtin))
@@ -77,20 +62,23 @@ module RubySmart
 
           # don't create multi-device for a single (or +nil+) builtin
           if builtins.length < 2
-            opts[:device] = _resolve_device(builtins[0], opts)
+            opts[:logdev] = _resolve_device(builtins[0], opts)
           else
-            opts[:device] = ::RubySmart::SimpleLogger::Devices::MultiDevice.new
+            opts[:logdev] = ::RubySmart::SimpleLogger::Devices::MultiDevice.new
             builtins.each do |builtin|
               # IMPORTANT: dup, original hash to prevent reference manipulation (on the TOP-level, only)
               builtin_opts = opts.dup
-              opts[:device].register(_resolve_device(builtin, builtin_opts), _resolve_formatter(builtin_opts))
+              opts[:logdev].register(_resolve_device(builtin, builtin_opts), _resolve_formatter(builtin_opts))
+
+              # disable payload, if any is disabled
+              opts[:payload] = false if builtin_opts[:payload] == false
             end
 
             # force 'passthrough', as format, since this is required for multi-devices
             opts[:format] = :passthrough
           end
 
-          # prevent to return any data
+          # prevent returning any data
           nil
         end
 
@@ -98,13 +86,13 @@ module RubySmart
         # opts may be manipulated by resolved formatter
         # does not return any data.
         # @param [Hash] opts
-        def _opts_formatter!(opts)
+        def assign_formatter!(opts)
           # check for already existing +formatter+
           return if opts[:formatter]
 
           opts[:formatter] = _resolve_formatter(opts)
 
-          # prevent to return any data
+          # prevent returning any data
           nil
         end
 
@@ -116,7 +104,7 @@ module RubySmart
           opts[:format] ||= :plain
 
           # fix nl - which depends on other opts
-          opts[:nl]  = _nl(opts)
+          opts[:nl] = _nl(opts)
 
           # fix clr
           opts[:clr] = true if opts[:clr].nil?
@@ -125,12 +113,17 @@ module RubySmart
         end
 
         # resolves & returns device from builtin & provided opts
-        # @param [Object] builtin
+        # @param [Object,nil] builtin
         # @param [Hash] opts
         def _resolve_device(builtin, opts)
+          # in case the provided *builtin* already responds to +write+, return it
+          return builtin if builtin.respond_to?(:write)
+
           case builtin
           when nil # builtin is nil - resolve optimal device for current environment
-            if ::ThreadInfo.stdout?
+            if opts.key?(:device)
+              _resolve_device(opts.delete(:device), opts)
+            elsif ::ThreadInfo.stdout?
               _resolve_device(:stdout, opts)
             elsif ::ThreadInfo.debugger?
               _resolve_device(:debugger, opts)
@@ -144,7 +137,13 @@ module RubySmart
           when :debugger
             raise "Unable to build SimpleLogger with 'debugger' builtin for not initialized Debugger!" unless ThreadInfo.debugger?
 
-            _resolve_device(::Debugger.logger, opts)
+            # since some IDEs did a Debase rewriting for Ruby 3.x, the logger is a Proc instead of a Logger instance
+            if ::Debugger.logger.is_a?(Proc)
+              opts[:format] = :plain # only the data string is forwarded to the proc
+              ::RubySmart::SimpleLogger::Devices::ProcDevice.new(::Debugger.logger)
+            else
+              _resolve_device(::Debugger.logger, opts)
+            end
           when :stdout
             STDOUT
           when :stderr
@@ -161,84 +160,103 @@ module RubySmart
               _resolve_device(::Rails.logger, opts)
             end
           when :proc
-            # force overwrite opts
-            @ignore_payload = true
-            opts[:nl]       = false
-            opts[:format]   = :passthrough
-
-            ::RubySmart::SimpleLogger::Devices::ProcDevice.new(opts.delete(:proc))
+            # slurp the proc and call the '_resolve_device' again
+            _resolve_device(opts.delete(:proc), opts)
           when :memory
             # force overwrite opts
-            @ignore_payload = true
-            opts[:format]   = :memory
+            opts[:payload] = false
+            opts[:format] = :memory
             # no color logging for memory devices
             opts[:clr] = false
 
             ::RubySmart::SimpleLogger::Devices::MemoryDevice.new
-          when Module, String
+          when Proc
             # force overwrite opts
+            opts[:payload] = false
+            opts[:nl] = false
+            opts[:format] = :passthrough
+
+            ::RubySmart::SimpleLogger::Devices::ProcDevice.new(builtin)
+          when Module
+            # no color logging for logfiles
             opts[:clr] = false
-            _logdev(opts, builtin)
+
+            logfile = _underscore(builtin.to_s) + '.log'
+
+            file_location = if ::ThreadInfo.rails? # check for rails
+                              File.join(::Rails.root, 'log', logfile)
+                            else
+                              File.join('log', logfile)
+                            end
+
+            # resolve path to create a folder
+            file_path = File.dirname(file_location)
+            FileUtils.mkdir_p(file_path) unless File.directory?(file_path)
+
+            # resolve new logdev with the provided options
+            _logdev(file_location, opts)
+          when String
+            # no color logging for logfiles
+            opts[:clr] = false
+
+            logfile = if builtin[-4..-1] == '.log'
+                        builtin
+                      else
+                        builtin + '.log'
+                      end
+
+            file_location = if builtin[0] == '/'
+                              builtin
+                            elsif ::ThreadInfo.rails?
+                              File.join(Rails.root, 'log', logfile)
+                            else
+                              File.join('log', logfile)
+                            end
+
+            # resolve path to create a folder
+            file_path = File.dirname(file_location)
+            FileUtils.mkdir_p(file_path) unless File.directory?(file_path)
+
+            # resolve new logdev with the provided options
+            _logdev(file_location, opts)
           when ::Logger
+            # resolve the logdev from the provided logger
             builtin.instance_variable_get(:@logdev).dev
           else
-            _logdev(opts, builtin)
+            raise "Unable to build SimpleLogger! The provided device '#{builtin}' must respond to 'write'!"
           end
         end
 
-        # resolve the final log-device from provided param
+        # Creates and configures a new instance of Logger::LogDevice based on the provided file location
+        # and optional settings.
+        #
+        # The configuration differs slightly based on the Ruby version being used. For Ruby versions
+        # prior to 2.7, the options `:binmode` is omitted as it is not supported. For Ruby 2.7 and newer,
+        # the `:binmode` option is included.
+        #
+        # @param [String] file_location - the file path where the log will be written.
         # @param [Hash] opts
-        # @param [Object] device
-        # @return [:Logger::LogDevice]
-        def _logdev(opts, device = nil)
-          device ||= opts.delete(:device)
-
-          # if existing device is already writeable, simply return it
-          return device if device.respond_to?(:write)
-
-          file_location = nil
-
-          # resolve the file_location from provided device
-          case device
-          when Module
-            devstring = device.to_s
-            logfile   = (devstring.respond_to?(:underscore) ? devstring.underscore : _underscore(device.to_s)) + '.log'
-            # check for rails
-            if ::ThreadInfo.rails?
-              file_location = File.join(Rails.root, 'log', logfile)
-            else
-              file_location = File.join('log', logfile)
-            end
-
-            # resolve path to create a folder
-            file_path = File.dirname(file_location)
-            FileUtils.mkdir_p(file_path) unless File.directory?(file_path)
-
-            # the logdev
-            file_location
-          when String
-            file_location = (device[0] == '/' ? device : "log/#{device}")
-
-            # resolve path to create a folder
-            file_path = File.dirname(file_location)
-            FileUtils.mkdir_p(file_path) unless File.directory?(file_path)
-
-            file_location
-          else
-            raise "Unable to build SimpleLogger! The provided device '#{device}' must respond to 'write'!"
-          end
-
+        #   A hash of options to configure the log device:
+        #   - `:shift_age` (default: 0) - Specifies the number of old log files to retain.
+        #   - `:shift_size` (default: 1048576, 1MB) - Specifies the maximum size of the log file,
+        #     after which the file will be rotated.
+        #   - `:shift_period_suffix` - A string specifying the date format for rotated files (optional).
+        #   - `:binmode` (Ruby >= 2.7 only) - Enables binary mode explicitly if set to `true`.
+        #
+        # @return [Logger::LogDevice]
+        #   Returns a newly configured instance of Logger::LogDevice.
+        def _logdev(file_location, opts)
           if GemInfo.match?(RUBY_VERSION, '< 2.7')
             ::Logger::LogDevice.new(file_location,
-                                    shift_age:           opts[:shift_age] || 0,
-                                    shift_size:          opts[:shift_size] || 1048576,
+                                    shift_age: opts[:shift_age] || 0,
+                                    shift_size: opts[:shift_size] || 1048576,
                                     shift_period_suffix: opts[:shift_period_suffix])
           else
             ::Logger::LogDevice.new(file_location,
-                                    shift_age:           opts[:shift_age] || 0,
-                                    shift_size:          opts[:shift_size] || 1048576,
+                                    shift_age: opts[:shift_age] || 0,
+                                    shift_size: opts[:shift_size] || 1048576,
                                     shift_period_suffix: opts[:shift_period_suffix],
-                                    binmode:             opts[:binmode])
+                                    binmode: opts[:binmode])
           end
         end
 

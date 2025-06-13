@@ -85,9 +85,9 @@ module RubySmart
         # log level @ debug
         # prints: prettified subject
         #
-        # > ===========================================================================================================
-        # > ================================================ <Subject> ================================================
-        # > ===========================================================================================================
+        # > ========================================================================================================================
+        # > ======================================================= <Subject> ======================================================
+        # > ========================================================================================================================
         base.scene :header, { level: :debug, payload: [:mask, [:mask, ' <%{subject}> '], :mask] } do |subject, **opts|
           # autostart a timer method, if required
           self.timer(:start, :default) if opts[:timer]
@@ -99,9 +99,9 @@ module RubySmart
         # log level @ debug
         # prints: prettified subject
         #
-        # > ===========================================================================================================
-        # > ================================================ >Subject< ================================================
-        # > ===========================================================================================================
+        # > ========================================================================================================================
+        # > ======================================================= >Subject< ======================================================
+        # > ========================================================================================================================
         base.scene :footer, { level: :debug, payload: [:mask, [:mask, ' >%{subject}< '], :mask] } do |subject, **opts|
           self.log nil, _scene_opts(:footer, subject: subject.to_s, **opts)
 
@@ -113,9 +113,9 @@ module RubySmart
         # log level @ debug
         # prints: prettified subject
         #
-        # > --------------------------------------------------------------------------------
-        # > #----------------------------------- Subject ----------------------------------#
-        # > --------------------------------------------------------------------------------
+        # > -----------------------------------------------------------------------------------------------
+        # > #------------------------------------------ Subject ------------------------------------------#
+        # > -----------------------------------------------------------------------------------------------
         base.scene :topic, { level: :debug, mask: { char: '-', length: 95, clr: :blueish }, payload: [:mask, [:mask, '%{title}'], :mask] } do |subject, **opts|
           opts         = _scene_opts(:topic, **opts)
           txt          = " #{subject} ".center(opts[:mask][:length] - 2, opts[:mask][:char])
@@ -129,7 +129,7 @@ module RubySmart
         # prints: prettified, colored subject
         #
         # > # Subject
-        # > ----------------------------------------------------------------------
+        # > -------------------------------------------------------------------------------------
         base.scene :theme, { level: :debug, clr: :purple, mask: { char: '-', length: 85, clr: :purple }, payload: [[:txt, '# %{subject}'], :mask] } do |subject, **opts|
           self.log nil, _scene_opts(:theme, subject: subject.to_s, **opts)
         end
@@ -138,7 +138,7 @@ module RubySmart
         # log level @ debug
         # prints: prettified, colored result
         #
-        # > ----------------------------------------------------------------------
+        # > -------------------------------------------------------------------------------------
         # > -> Result
         # >
         base.scene :theme_result, { level: :debug, mask: { char: '-', length: 85, clr: :purple }, payload: [:mask, [:txt, '-> %{result}'], ''] } do |result, status = nil, **opts|
@@ -149,7 +149,7 @@ module RubySmart
         # log level @ debug
         # prints: colored line with no text
         #
-        # > ----------------------------------------------------------------------
+        # > -------------------------------------------------------------------------------------
         base.scene :theme_line, { level: :debug, mask: { char: '-', length: 85, clr: :purple }, payload: [:mask] } do |**opts|
           self.log nil, _scene_opts(:theme_line, **opts)
         end
@@ -170,7 +170,7 @@ module RubySmart
         # calls the result method if a block was provided
         #
         # > - Job name                                                         =>
-        #     ________________________________________________________________ <- 64 chars
+        #     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ <- 64 chars
         base.scene :job, { level: :debug, clr: :cyan, nl: false, length: 64, payload: [[:concat, ['- ', [:txt, '%{name}'], ' => ']]] } do |name, **opts, &block|
           self.log nil, _scene_opts(:job, name: name, **opts)
           self.result(*block.call) if block
@@ -182,7 +182,7 @@ module RubySmart
         # calls the result method if a block was provided
         #
         # >   * Subjob name                                                    =>
-        #       ______________________________________________________________ <- 62 chars
+        #       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ <- 62 chars
         base.scene :sub_job, { level: :debug, clr: :cyan, nl: false, length: 62, payload: [[:concat, ['  * ', [:txt, '%{name}'], ' => ']]] } do |name, **opts, &block|
           self.log nil, _scene_opts(:sub_job, name: name, **opts)
           self.result(*block.call) if block
@@ -331,6 +331,7 @@ module RubySmart
                          end
           rescue => e
             self.fatal("#{e.message} @ #{e.backtrace_locations&.first}") unless opts[:silent]
+
             # reraise exception
             raise
           ensure

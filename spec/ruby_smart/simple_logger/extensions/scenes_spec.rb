@@ -19,22 +19,6 @@ RSpec.describe "Scenes extension" do
       expect(RubySmart::SimpleLogger::Logger.scenes.keys).to include :spec_check
     end
 
-    # skip, since this will affect the original method and reduces coverage
-    xit 'overwrites a existing severity scene' do
-      res = nil
-      expect{
-        res = RubySmart::SimpleLogger::Logger.scene :unknown do
-          self.log 'My SPEC NEW'
-        end
-      }.to_not change(RubySmart::SimpleLogger::Logger.scenes, :count)
-      expect(res).to eq true
-
-      # restore orig
-      RubySmart::SimpleLogger::Logger.scene :unknown, { level: :unknown, mask: { clr: :gray }, payload: [[:mask, ' [%{subject}] '], :__data__, :mask] } do |data, subject = 'Unknown', **opts|
-        self.log data, _scene_opts(:unknown, subject: subject, **opts)
-      end
-    end
-
     it 'blocks non severity methods' do
       res = nil
       expect{

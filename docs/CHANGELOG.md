@@ -1,5 +1,11 @@
 # RubySmart::SimpleLogger - CHANGELOG
 
+## [1.6.0] - 2025-06-13
+* **[add]** `Proc` to builtins
+* **[add]** better specs
+* **[ref]** initialization process _(simplify, move instance-assignments to `#initialize`, rename \_opts_x to assign_x)_
+* **[fix]** `Debase.logger` rewriting for Ruby 3.x _(Debase.logger is a proc instead of a Logger / STDOUT)_
+
 ## [1.5.3] - 2024-09-16
 * **[fix]** scene `job`-, `sub_job`-methods not working with provided block
 * **[fix]** scene `result`-methods not printing boolean results (also fixes exception for boolean/numeric results)

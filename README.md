@@ -39,6 +39,7 @@ Or install it yourself as:
 * `awesome_print` gem compatibility for a prettified object debug
 * Multi-device support (write to logfile & to STDOUT & to ... & to ...)
 * 'klass_logger' instances for easier access _(see [klass_logger](#klass_logger_Usage))_
+* Debug / Debase compatibility
 
 -----
 
@@ -789,12 +790,89 @@ end
 # ╚   END ❯ Process Alpha (0.001036969)
 ```
 
-### _other useful methods_
+### model(mdl, opts)
+Useful for rails applications to debug or log a save _(create/update)_ result of a model.
+The `model` method logs in three different scenes `SUCCESS ERROR INFO`, depending on the models state: created, updated, error, skipped
 
-- line
-- print
-- nl
-- model _(rails only)_
+```ruby
+require 'simple_logger'
+l = SimpleLogger.new(:stdout, payload: false)
+
+# create a model and save it (with validation errors)
+mdl = User.new first_name: 'Max'
+mdl.save
+
+# log the result
+l.model(mdl)
+
+# creates an ERROR of:
+# [USER|ERROR] Max (E-Mail is invalid, Username is invalid)
+
+# ------------------------------------------------------------------------------------------
+
+# update the model to prevent validation errors
+mdl.username = 'test'
+mdl.email = 'max@test.x'
+mdl.save
+
+# creates an SUCCESS of:
+# [USER|CREATED] #1 - Max
+
+# ------------------------------------------------------------------------------------------
+
+# update the model
+mdl.update(username: 'tester')
+
+# creates an SUCCESS of:
+# [USER|UPDATED] #1 - Max
+
+# ------------------------------------------------------------------------------------------
+
+# update the model again (without any change)
+mdl.update(username: 'tester')
+
+# creates an INFO of:
+# [USER|SKIPPED] #1 - Max
+```
+
+### line(data, opts)
+Prints just a line with data and line-break _(for payloads)_
+
+```ruby
+require 'simple_logger'
+l = SimpleLogger.new(:stdout)
+
+l.line "some example line of DATA"
+l.print "other example"
+# > some example line of DATA
+# > other example
+# > 
+```
+
+### print(data, opts)
+Prints just data without line-break
+
+```ruby
+require 'simple_logger'
+l = SimpleLogger.new(:stdout)
+
+l.print "some example line of DATA"
+l.print "other example"
+# > some example line of DATAother example
+```
+
+
+### nl(opts)
+Prints just a line-break.
+
+```ruby
+require 'simple_logger'
+l = SimpleLogger.new(:stdout)
+
+l.nl
+# > 
+# > 
+```
 
 -----
 

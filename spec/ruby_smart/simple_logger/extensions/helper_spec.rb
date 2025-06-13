@@ -7,7 +7,7 @@ RSpec.describe "Helper extension" do
     @logger = RubySmart::SimpleLogger.new
   end
 
-  describe '#_opts_builtin' do
+  describe 'builtin' do
     describe 'nil' do
       it 'uses optimal device' do
         expect(@logger.logdev).to be
@@ -17,7 +17,7 @@ RSpec.describe "Helper extension" do
 
     describe 'proc' do
       it 'uses proc' do
-        logger = RubySmart::SimpleLogger.new :proc, proc: lambda{|_data|}
+        logger = RubySmart::SimpleLogger.new :proc, proc: lambda { |_data| }
 
         expect(logger.formatter.opts[:format]).to eq :passthrough
         expect(logger.formatter.opts[:nl]).to eq false
@@ -26,8 +26,22 @@ RSpec.describe "Helper extension" do
       end
 
       it 'can use provided device' do
-        logger = RubySmart::SimpleLogger.new :datalog, device: 'builtins_spec.log'
+        logger = RubySmart::SimpleLogger.new Proc.new { |_data| }
+        expect(logger.logdev).to be_a RubySmart::SimpleLogger::Devices::ProcDevice
+      end
+    end
+
+    describe 'string' do
+      it 'can use provided file' do
+        logger = RubySmart::SimpleLogger.new 'builtins_spec.log'
         expect(logger.logdev.dev).to be_a ::File
+        expect(logger.logdev.dev.path).to eq 'log/builtins_spec.log'
+      end
+
+      it 'adds missing extension' do
+        logger = RubySmart::SimpleLogger.new 'custom'
+        expect(logger.logdev.dev).to be_a ::File
+        expect(logger.logdev.dev.path).to eq 'log/custom.log'
       end
     end
 
@@ -89,8 +103,8 @@ RSpec.describe "Helper extension" do
         expect(logger.logdev).to be_a RubySmart::SimpleLogger::Devices::NullDevice
       end
 
-      it 'uses debugger' do
-        expect{
+      it 'uses debugger with logger' do
+        expect {
           RubySmart::SimpleLogger.new :debugger
         }.to raise_error("Unable to build SimpleLogger with 'debugger' builtin for not initialized Debugger!")
 
@@ -109,8 +123,24 @@ RSpec.describe "Helper extension" do
         expect(logger.logdev).to eq Debugger.logger.instance_variable_get(:@logdev).dev
       end
 
+      it 'uses debugger with proc' do
+        stub_const '::Debugger', Class.new
+        Debugger.class_eval do
+          def self.logger
+            @logger ||= Proc.new { |_data| }
+          end
+
+          def self.handler
+            nil
+          end
+        end
+
+        logger = RubySmart::SimpleLogger.new :debugger
+        expect(logger.logdev).to be_a RubySmart::SimpleLogger::Devices::ProcDevice
+      end
+
       it 'NOT uses rails' do
-        expect{
+        expect {
           RubySmart::SimpleLogger.new :rails
         }.to raise_error("Unable to build SimpleLogger with 'rails' builtin for not initialized rails application!")
       end
@@ -150,8 +180,8 @@ RSpec.describe "Helper extension" do
     end
 
     it ':mask' do
-      logger = RubySmart::SimpleLogger.new :stdout, mask: {length: 10}
-      expect(logger.mask).to eq({char:"=", length: 10, clr: :blue})
+      logger = RubySmart::SimpleLogger.new :stdout, mask: { length: 10 }
+      expect(logger.mask).to eq({ char: "=", length: 10, clr: :blue })
     end
 
     it ':level' do
@@ -166,11 +196,11 @@ RSpec.describe "Helper extension" do
     end
 
     it 'merges provided hashes' do
-      opts1 = {level: :debug, formatter: :my, payload: [], subtree: {items: {status: true}}}
-      opts2 = {payload: [:_], ins: true}
-      opts3 = {subtree: {items: {pos: 1}, count: 12}}
+      opts1 = { level: :debug, formatter: :my, payload: [], subtree: { items: { status: true } } }
+      opts2 = { payload: [:_], ins: true }
+      opts3 = { subtree: { items: { pos: 1 }, count: 12 } }
 
-      expect(@logger.send(:_opt,opts1, opts2, opts3)).to eq({formatter: :my, ins: true, level: :debug, payload: [:_], subtree: {count: 12, items: {pos: 1}}})
+      expect(@logger.send(:_opt, opts1, opts2, opts3)).to eq({ formatter: :my, ins: true, level: :debug, payload: [:_], subtree: { count: 12, items: { pos: 1 } } })
     end
   end
 
@@ -226,36 +256,66 @@ RSpec.describe "Helper extension" do
       expect(@logger.send(:_res_clr, :orange)).to eq :orange
       expect(@logger.send(:_res_clr, :yellow)).to eq :yellow
     end
+
+    it 'returns fallback' do
+      expect(@logger.send(:_res_clr, 45)).to eq :grey
+      expect(@logger.send(:_res_clr, ::Logger::LogDevice)).to eq :grey
+    end
   end
 
-  describe '#_logdev' do
+  describe '#_resolve_device' do
     it 'returns a logdev instance' do
-      expect(@logger.send(:_logdev, {}, "x.log")).to be_a ::Logger::LogDevice
+      expect(@logger.send(:_resolve_device, "x.log", {})).to be_a ::Logger::LogDevice
     end
 
     it 'returns Module location' do
-      expect(@logger.send(:_logdev, {}, Dummy::With::UsersHelper::OfAny::Levels).dev.path).to eq 'log/dummy/with/users_helper/of_any/levels.log'
-      expect(@logger.send(:_logdev, {}, Dummy::With::UsersHelper::OfAny).dev.path).to eq 'log/dummy/with/users_helper/of_any.log'
-      expect(@logger.send(:_logdev, {}, Dummy::With::UsersHelper).dev.path).to eq 'log/dummy/with/users_helper.log'
-      expect(@logger.send(:_logdev, {}, Dummy).dev.path).to eq 'log/dummy.log'
+      expect(@logger.send(:_resolve_device, Dummy::With::UsersHelper::OfAny::Levels, {}).dev.path).to eq 'log/dummy/with/users_helper/of_any/levels.log'
+      expect(@logger.send(:_resolve_device, Dummy::With::UsersHelper::OfAny, {}).dev.path).to eq 'log/dummy/with/users_helper/of_any.log'
+      expect(@logger.send(:_resolve_device, Dummy::With::UsersHelper, {}).dev.path).to eq 'log/dummy/with/users_helper.log'
+      expect(@logger.send(:_resolve_device, Dummy, {}).dev.path).to eq 'log/dummy.log'
+    end
+
+    it 'returns Module location for rails' do
+      # here the method +::ThreadInfo.rails?+ must temporary return true
+      allow(::ThreadInfo).to receive(:rails?).and_return(true)
+      stub_const '::Rails', Class.new
+      ::Rails.class_eval do
+        def self.root
+          "log/rails_root";
+        end
+      end
+
+      expect(@logger.send(:_resolve_device, RubySmart::SimpleLogger, {}).dev.path).to eq 'log/rails_root/log/ruby_smart/simple_logger.log'
     end
 
     it 'returns file location' do
-      expect(@logger.send(:_logdev, {}, "my-cool-logfile.log").dev.path).to eq 'log/my-cool-logfile.log'
+      expect(@logger.send(:_resolve_device, "my-cool-logfile.log", {}).dev.path).to eq 'log/my-cool-logfile.log'
 
-      path = File.expand_path(File.join(File.dirname(__FILE__),'..', '..', '..', '..','log','helper_spec.log'))
-      expect(@logger.send(:_logdev, {}, path).dev.path).to eq path
+      path = File.expand_path(File.join(File.dirname(__FILE__), '..', '..', '..', '..', 'log', 'helper_spec.log'))
+      expect(@logger.send(:_resolve_device, path, {}).dev.path).to eq path
+    end
+
+    it 'returns file location for rails' do
+      allow(::ThreadInfo).to receive(:rails?).and_return(true)
+      stub_const '::Rails', Class.new
+      ::Rails.class_eval do
+        def self.root
+          "log/rails_root";
+        end
+      end
+
+      expect(@logger.send(:_resolve_device, "my-cool-logfile.log", {}).dev.path).to eq 'log/rails_root/log/my-cool-logfile.log'
     end
 
     it 'returns provided device' do
-      expect(@logger.send(:_logdev, {}, STDOUT)).to eq STDOUT
-      expect(@logger.send(:_logdev, {device: STDOUT})).to eq STDOUT
+      expect(@logger.send(:_resolve_device, STDOUT, {})).to eq STDOUT
+      expect(@logger.send(:_resolve_device, nil, { device: STDOUT })).to eq STDOUT
     end
 
     it 'fails' do
-      expect{
-        @logger.send(:_logdev, {}, :logdev)
-      }.to raise_exception RuntimeError, "Unable to build SimpleLogger! The provided device 'logdev' must respond to 'write'!"
+      expect {
+        @logger.send(:_resolve_device, :wrong, {})
+      }.to raise_exception RuntimeError, "Unable to build SimpleLogger! The provided device 'wrong' must respond to 'write'!"
     end
   end
 end

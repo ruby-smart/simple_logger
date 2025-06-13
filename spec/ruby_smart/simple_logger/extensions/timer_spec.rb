@@ -175,5 +175,21 @@ RSpec.describe "Timer extension" do
       expect(@logger.timer(:start, :t13)).to be true
       expect(@logger.timer(:clear, :t13)).to be > 0
     end
+
+    it 'returns humanized time' do
+      allow(@logger).to receive(:time_ago_in_words).and_return("one week")
+      class Integer
+        def seconds
+          self * 1_000
+        end
+
+        def from_now
+          self
+        end
+      end
+
+      expect(@logger.timer(:start, :t10)).to be true
+      expect(@logger.timer(:clear, :t10, humanized: true)).to eq 'one week'
+    end
   end
 end
