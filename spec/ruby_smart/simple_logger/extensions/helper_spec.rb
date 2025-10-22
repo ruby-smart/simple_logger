@@ -154,10 +154,10 @@ RSpec.describe "Helper extension" do
     end
 
     it ':nl' do
-      logger = RubySmart::SimpleLogger.new nl: true
+      logger = RubySmart::SimpleLogger.new :stdout, nl: true
       expect(logger.formatter.opts[:nl]).to eq true
 
-      logger2 = RubySmart::SimpleLogger.new nl: false
+      logger2 = RubySmart::SimpleLogger.new :stdout, nl: false
       expect(logger2.formatter.opts[:nl]).to eq false
     end
 
