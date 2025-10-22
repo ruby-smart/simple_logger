@@ -1,5 +1,8 @@
 # RubySmart::SimpleLogger - CHANGELOG
 
+## [1.6.1] - 2025-10-22
+* **[fix]** Newline _(`nl`)_ related issues on several devices _(i.e. `Debase.logger` / `Rails.logger`)_
+
 ## [1.6.0] - 2025-06-13
 * **[add]** `Proc` to builtins
 * **[add]** better specs

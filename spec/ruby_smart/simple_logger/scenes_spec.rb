@@ -13,9 +13,9 @@ RSpec.describe RubySmart::SimpleLogger::Scenes do
     it '#debug' do
       expect {
         spec_log_result(:debug) do |res|
-          res << "\e[1;34m======================================================== [Debug] =======================================================\e[0m\n"
-          res << "\"example\"\n" # debug with #inspect
-          res << "\e[1;34m========================================================================================================================\e[0m\n"
+          res << "\e[1;34m======================================================== [Debug] =======================================================\e[0m"
+          res << "\"example\"" # debug with #inspect
+          res << "\e[1;34m========================================================================================================================\e[0m"
         end
       }.to change { @log_result }
     end
@@ -23,9 +23,9 @@ RSpec.describe RubySmart::SimpleLogger::Scenes do
     it '#info' do
       expect {
         spec_log_result(:info) do |res|
-          res << "\e[1;36m======================================================== [Info] ========================================================\e[0m\n"
-          res << "example\n"
-          res << "\e[1;36m========================================================================================================================\e[0m\n"
+          res << "\e[1;36m======================================================== [Info] ========================================================\e[0m"
+          res << "example"
+          res << "\e[1;36m========================================================================================================================\e[0m"
         end
       }.to change { @log_result }
     end
@@ -33,9 +33,9 @@ RSpec.describe RubySmart::SimpleLogger::Scenes do
     it '#warn' do
       expect {
         spec_log_result(:warn) do |res|
-          res << "\e[1;33m======================================================== [Warn] ========================================================\e[0m\n"
-          res << "example\n"
-          res << "\e[1;33m========================================================================================================================\e[0m\n"
+          res << "\e[1;33m======================================================== [Warn] ========================================================\e[0m"
+          res << "example"
+          res << "\e[1;33m========================================================================================================================\e[0m"
         end
       }.to change { @log_result }
     end
@@ -43,9 +43,9 @@ RSpec.describe RubySmart::SimpleLogger::Scenes do
     it '#error' do
       expect {
         spec_log_result(:error) do |res|
-          res << "\e[1;31m======================================================== [Error] =======================================================\e[0m\n"
-          res << "example\n"
-          res << "\e[1;31m========================================================================================================================\e[0m\n"
+          res << "\e[1;31m======================================================== [Error] =======================================================\e[0m"
+          res << "example"
+          res << "\e[1;31m========================================================================================================================\e[0m"
         end
       }.to change { @log_result }
     end
@@ -53,9 +53,9 @@ RSpec.describe RubySmart::SimpleLogger::Scenes do
     it '#fatal' do
       expect {
         spec_log_result(:fatal) do |res|
-          res << "\e[41m======================================================== [Fatal] =======================================================\e[0m\n"
-          res << "example\n"
-          res << "\e[41m========================================================================================================================\e[0m\n"
+          res << "\e[41m======================================================== [Fatal] =======================================================\e[0m"
+          res << "example"
+          res << "\e[41m========================================================================================================================\e[0m"
         end
       }.to change { @log_result }
     end
@@ -63,9 +63,9 @@ RSpec.describe RubySmart::SimpleLogger::Scenes do
     it '#unknown' do
       expect {
         spec_log_result(:unknown) do |res|
-          res << "\e[1;30m======================================================= [Unknown] ======================================================\e[0m\n"
-          res << "example\n"
-          res << "\e[1;30m========================================================================================================================\e[0m\n"
+          res << "\e[1;30m======================================================= [Unknown] ======================================================\e[0m"
+          res << "example"
+          res << "\e[1;30m========================================================================================================================\e[0m"
         end
       }.to change { @log_result }
     end
@@ -73,9 +73,9 @@ RSpec.describe RubySmart::SimpleLogger::Scenes do
     it '#success' do
       expect {
         spec_log_result(:success) do |res|
-          res << "\e[1;32m======================================================= [Success] ======================================================\e[0m\n"
-          res << "example\n"
-          res << "\e[1;32m========================================================================================================================\e[0m\n"
+          res << "\e[1;32m======================================================= [Success] ======================================================\e[0m"
+          res << "example"
+          res << "\e[1;32m========================================================================================================================\e[0m"
         end
       }.to change { @log_result }
     end
@@ -85,9 +85,9 @@ RSpec.describe RubySmart::SimpleLogger::Scenes do
     it '#header' do
       expect {
         spec_log_result(:header, "header") do |res|
-          res << "\e[1;34m========================================================================================================================\e[0m\n"
-          res << "\e[1;34m======================================================= <header> =======================================================\e[0m\n"
-          res << "\e[1;34m========================================================================================================================\e[0m\n"
+          res << "\e[1;34m========================================================================================================================\e[0m"
+          res << "\e[1;34m======================================================= <header> =======================================================\e[0m"
+          res << "\e[1;34m========================================================================================================================\e[0m"
         end
       }.to change { @log_result }
     end
@@ -95,9 +95,9 @@ RSpec.describe RubySmart::SimpleLogger::Scenes do
     it '#footer' do
       expect {
         spec_log_result(:footer, "footer") do |res|
-          res << "\e[1;34m========================================================================================================================\e[0m\n"
-          res << "\e[1;34m======================================================= >footer< =======================================================\e[0m\n"
-          res << "\e[1;34m========================================================================================================================\e[0m\n"
+          res << "\e[1;34m========================================================================================================================\e[0m"
+          res << "\e[1;34m======================================================= >footer< =======================================================\e[0m"
+          res << "\e[1;34m========================================================================================================================\e[0m"
         end
       }.to change { @log_result }
     end
@@ -115,9 +115,9 @@ RSpec.describe RubySmart::SimpleLogger::Scenes do
   it '#topic' do
     expect {
       spec_log_result(:topic, "topic") do |res|
-        res << "\e[0;34m-----------------------------------------------------------------------------------------------\e[0m\n"
-        res << "\e[0;34m#------------------------------------------- topic -------------------------------------------#\e[0m\n"
-        res << "\e[0;34m-----------------------------------------------------------------------------------------------\e[0m\n"
+        res << "\e[0;34m-----------------------------------------------------------------------------------------------\e[0m"
+        res << "\e[0;34m#------------------------------------------- topic -------------------------------------------#\e[0m"
+        res << "\e[0;34m-----------------------------------------------------------------------------------------------\e[0m"
       end
     }.to change { @log_result }
   end
@@ -126,8 +126,8 @@ RSpec.describe RubySmart::SimpleLogger::Scenes do
     it '#theme' do
       expect {
         spec_log_result(:theme, "theme") do |res|
-          res << "\e[1;35m# theme\e[0m\n"
-          res << "\e[1;35m-------------------------------------------------------------------------------------\e[0m\n"
+          res << "\e[1;35m# theme\e[0m"
+          res << "\e[1;35m-------------------------------------------------------------------------------------\e[0m"
         end
       }.to change { @log_result }
     end
@@ -135,8 +135,8 @@ RSpec.describe RubySmart::SimpleLogger::Scenes do
     it '#theme_result' do
       expect {
         spec_log_result(:theme_result, "ok", true) do |res|
-          res << "\e[1;35m-------------------------------------------------------------------------------------\e[0m\n"
-          res << "\e[1;32m-> ok\e[0m\n\n"
+          res << "\e[1;35m-------------------------------------------------------------------------------------\e[0m"
+          res << "\e[1;32m-> ok\e[0m"
         end
       }.to change { @log_result }
     end
@@ -144,7 +144,7 @@ RSpec.describe RubySmart::SimpleLogger::Scenes do
     it '#theme_line' do
       expect {
         spec_log_result(:theme_line, :_) do |res|
-          res << "\e[1;35m-------------------------------------------------------------------------------------\e[0m\n"
+          res << "\e[1;35m-------------------------------------------------------------------------------------\e[0m"
         end
       }.to change { @log_result }
     end
@@ -153,7 +153,7 @@ RSpec.describe RubySmart::SimpleLogger::Scenes do
   it '#desc' do
     expect {
       spec_log_result(:desc) do |res|
-        res << "\e[1;35mexample\e[0m\n"
+        res << "\e[1;35mexample\e[0m"
       end
     }.to change { @log_result }
   end
@@ -170,7 +170,7 @@ RSpec.describe RubySmart::SimpleLogger::Scenes do
     it '#job with block' do
       expect {
         spec_log_result(:job, "job", block: -> { false }) do |res|
-          res << "- \e[1;36mjob                                                             \e[0m => \e[1;31mfalse\e[0m\n"
+          res << "- \e[1;36mjob                                                             \e[0m => \e[1;31mfalse\e[0m"
         end
       }.to change { @log_result }
     end
@@ -187,7 +187,7 @@ RSpec.describe RubySmart::SimpleLogger::Scenes do
     it '#sub_job with block' do
       expect {
         spec_log_result(:sub_job, "sub job", block: -> { 'OK' }) do |res|
-          res << "  * \e[1;36msub job                                                       \e[0m => \e[1;32mOK\e[0m\n"
+          res << "  * \e[1;36msub job                                                       \e[0m => \e[1;32mOK\e[0m"
         end
       }.to change { @log_result }
     end
@@ -195,7 +195,7 @@ RSpec.describe RubySmart::SimpleLogger::Scenes do
     it '#result to false' do
       expect {
         spec_log_result(:result, false) do |res|
-          res << "\e[1;31mfalse\e[0m\n"
+          res << "\e[1;31mfalse\e[0m"
         end
       }.to change { @log_result }
     end
@@ -203,7 +203,7 @@ RSpec.describe RubySmart::SimpleLogger::Scenes do
     it '#result to true' do
       expect {
         spec_log_result(:result, true) do |res|
-          res << "\e[1;32mtrue\e[0m\n"
+          res << "\e[1;32mtrue\e[0m"
         end
       }.to change { @log_result }
     end
@@ -211,7 +211,7 @@ RSpec.describe RubySmart::SimpleLogger::Scenes do
     it '#result with status' do
       expect {
         spec_log_result(:result, "fail", false) do |res|
-          res << "\e[1;31mfail\e[0m\n"
+          res << "\e[1;31mfail\e[0m"
         end
       }.to change { @log_result }
     end
@@ -219,7 +219,7 @@ RSpec.describe RubySmart::SimpleLogger::Scenes do
     it '#result with color' do
       expect {
         spec_log_result(:result, "skipped", :yellow) do |res|
-          res << "\e[1;33mskipped\e[0m\n"
+          res << "\e[1;33mskipped\e[0m"
         end
       }.to change { @log_result }
     end
@@ -227,7 +227,7 @@ RSpec.describe RubySmart::SimpleLogger::Scenes do
     it '#job_result' do
       expect {
         spec_log_result(:job_result, "job", 'unknown', :yellow) do |res|
-          res << "- \e[1;36mjob                                                             \e[0m => \e[1;33munknown\e[0m\n"
+          res << "- \e[1;36mjob                                                             \e[0m => \e[1;33munknown\e[0m"
         end
       }.to change { @log_result }
     end
@@ -235,7 +235,7 @@ RSpec.describe RubySmart::SimpleLogger::Scenes do
     it '#sub_job_result' do
       expect {
         spec_log_result(:sub_job_result, "sub job", true) do |res|
-          res << "  * \e[1;36msub job                                                       \e[0m => \e[1;32mtrue\e[0m\n"
+          res << "  * \e[1;36msub job                                                       \e[0m => \e[1;32mtrue\e[0m"
         end
       }.to change { @log_result }
     end
@@ -245,7 +245,7 @@ RSpec.describe RubySmart::SimpleLogger::Scenes do
     it '#line' do
       expect {
         spec_log_result(:line, "data") do |res|
-          res << "data\n"
+          res << "data"
         end
       }.to change { @log_result }
     end
@@ -261,7 +261,7 @@ RSpec.describe RubySmart::SimpleLogger::Scenes do
     it '#nl' do
       expect {
         spec_log_result(:nl, :_) do |res|
-          res << "\n"
+          res << ""
         end
       }.to change { @log_result }
     end
@@ -303,7 +303,7 @@ RSpec.describe RubySmart::SimpleLogger::Scenes do
     it '#progress 0' do
       expect {
         spec_log_result(:progress, 'step 1', 0) do |res|
-          res << "- \e[1;36mstep 1                                          \e[0m [  0%] \e[1;32m>\e[0m\e[1;31m-------------------------------------------------\e[0m\n"
+          res << "- \e[1;36mstep 1                                          \e[0m [  0%] \e[1;32m>\e[0m\e[1;31m-------------------------------------------------\e[0m"
         end
       }.to change { @log_result }
     end
@@ -311,7 +311,7 @@ RSpec.describe RubySmart::SimpleLogger::Scenes do
     it '#progress 40' do
       expect {
         spec_log_result(:progress, 'step 2', 40) do |res|
-          res << "- \e[1;36mstep 2                                          \e[0m [ 40%] \e[1;32m===================>\e[0m\e[1;31m------------------------------\e[0m\n"
+          res << "- \e[1;36mstep 2                                          \e[0m [ 40%] \e[1;32m===================>\e[0m\e[1;31m------------------------------\e[0m"
         end
       }.to change { @log_result }
     end
@@ -319,7 +319,7 @@ RSpec.describe RubySmart::SimpleLogger::Scenes do
     it '#progress 100' do
       expect {
         spec_log_result(:progress, 'step 3', 100) do |res|
-          res << "- \e[1;36mstep 3                                          \e[0m [100%] \e[1;32m=================================================>\e[0m\e[1;31m\e[0m\n"
+          res << "- \e[1;36mstep 3                                          \e[0m [100%] \e[1;32m=================================================>\e[0m\e[1;31m\e[0m"
         end
       }.to change { @log_result }
     end
@@ -417,7 +417,7 @@ RSpec.describe RubySmart::SimpleLogger::Scenes do
     it 'logs create' do
       expect {
         spec_log_result(:model, Dummy::Model.new(:create)) do |res|
-          res << "\e[1;32m======================================================= [Success] ======================================================\e[0m\n[\e[46mDUMMY::MODEL|CREATED\e[0m] A dummy model\n\e[1;32m========================================================================================================================\e[0m\n"
+          res << "\e[1;32m======================================================= [Success] ======================================================\e[0m[\e[46mDUMMY::MODEL|CREATED\e[0m] A dummy model\e[1;32m========================================================================================================================\e[0m"
         end
       }.to change { @log_result }
     end
@@ -425,7 +425,7 @@ RSpec.describe RubySmart::SimpleLogger::Scenes do
     it 'logs verbose update' do
       expect {
         spec_log_result(:model, Dummy::Model.new(:update), verbose: true) do |res|
-          res << "\e[1;32m======================================================= [Success] ======================================================\e[0m\n[\e[46mDUMMY::MODEL|UPDATED\e[0m] #4711 - A dummy model (\"some changes\")\n\e[1;32m========================================================================================================================\e[0m\n"
+          res << "\e[1;32m======================================================= [Success] ======================================================\e[0m[\e[46mDUMMY::MODEL|UPDATED\e[0m] #4711 - A dummy model (\"some changes\")\e[1;32m========================================================================================================================\e[0m"
         end
       }.to change { @log_result }
     end
@@ -433,7 +433,7 @@ RSpec.describe RubySmart::SimpleLogger::Scenes do
     it 'logs minimized update' do
       expect {
         spec_log_result(:model, Dummy::Model.new(:update)) do |res|
-          res << "\e[1;32m======================================================= [Success] ======================================================\e[0m\n[\e[46mDUMMY::MODEL|UPDATED\e[0m] #4711 - A dummy model\n\e[1;32m========================================================================================================================\e[0m\n"
+          res << "\e[1;32m======================================================= [Success] ======================================================\e[0m[\e[46mDUMMY::MODEL|UPDATED\e[0m] #4711 - A dummy model\e[1;32m========================================================================================================================\e[0m"
         end
       }.to change { @log_result }
     end
@@ -441,7 +441,7 @@ RSpec.describe RubySmart::SimpleLogger::Scenes do
     it 'logs error' do
       expect {
         spec_log_result(:model, Dummy::Model.new(:error)) do |res|
-          res << "\e[1;31m======================================================== [Error] =======================================================\e[0m\n[\e[46mDUMMY::MODEL|ERROR\e[0m] #4711 - A dummy model (a, full, message, string)\n\e[1;31m========================================================================================================================\e[0m\n"
+          res << "\e[1;31m======================================================== [Error] =======================================================\e[0m[\e[46mDUMMY::MODEL|ERROR\e[0m] #4711 - A dummy model (a, full, message, string)\e[1;31m========================================================================================================================\e[0m"
         end
       }.to change { @log_result }
     end
@@ -449,7 +449,7 @@ RSpec.describe RubySmart::SimpleLogger::Scenes do
     it 'logs skipped' do
       expect {
         spec_log_result(:model, Dummy::Model.new(:skipped)) do |res|
-          res << "\e[1;36m======================================================== [Info] ========================================================\e[0m\n[\e[46mDUMMY::MODEL|SKIPPED\e[0m] #4711 - A dummy model\n\e[1;36m========================================================================================================================\e[0m\n"
+          res << "\e[1;36m======================================================== [Info] ========================================================\e[0m[\e[46mDUMMY::MODEL|SKIPPED\e[0m] #4711 - A dummy model\e[1;36m========================================================================================================================\e[0m"
         end
       }.to change { @log_result }
     end

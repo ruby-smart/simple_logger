@@ -13,11 +13,11 @@ module Debugger
   extend ::RubySmart::SimpleLogger::KlassLogger
 
   # force debugger to 'DEBUG' severity
-  self.klass_logger_opts = {level: ::RubySmart::SimpleLogger::Logger::DEBUG}
+  self.klass_logger_opts = { level: ::RubySmart::SimpleLogger::Logger::DEBUG }
 
-  # overwrite existing "debug" method (if Debase was loaded)
-  def self.debug(*args)
+  # overwrite existing "debug" method (if Debase was loaded, this needs to be rewritten)
+  def self.debug(*args, **kwargs)
     return false if args.none?
-    klass_logger.debug(*args)
+    klass_logger.debug(*args, **kwargs)
   end
 end

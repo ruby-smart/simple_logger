@@ -103,8 +103,8 @@ module RubySmart
           # set default format
           opts[:format] ||= :plain
 
-          # fix nl - which depends on other opts
-          opts[:nl] = _nl(opts)
+          # fix nl
+          opts[:nl] = true if opts[:nl].nil?
 
           # fix clr
           opts[:clr] = true if opts[:clr].nil?
@@ -139,7 +139,10 @@ module RubySmart
 
             # since some IDEs did a Debase rewriting for Ruby 3.x, the logger is a Proc instead of a Logger instance
             if ::Debugger.logger.is_a?(Proc)
-              opts[:format] = :plain # only the data string is forwarded to the proc
+              # only the data string is forwarded to the proc
+              opts[:format] = :plain
+              # the newline is handled by the logger itself
+              opts[:nl] = false
               ::RubySmart::SimpleLogger::Devices::ProcDevice.new(::Debugger.logger)
             else
               _resolve_device(::Debugger.logger, opts)
@@ -168,6 +171,8 @@ module RubySmart
             opts[:format] = :memory
             # no color logging for memory devices
             opts[:clr] = false
+            # no newline (just for completeness - however the "memory" formatter does NEVER include *nl*)
+            opts[:nl] = false
 
             ::RubySmart::SimpleLogger::Devices::MemoryDevice.new
           when Proc
@@ -271,16 +276,6 @@ module RubySmart
           word.tr!("-", "_")
           word.downcase!
           word
-        end
-
-        # returns the +nl+ (new line) flag, depending on the provided options.
-        # recognizes +:nl+ and +:payload+ options.
-        # @param [Hash] opts
-        # @return [Boolean]
-        def _nl(opts)
-          return opts[:nl] unless opts[:nl].nil?
-
-          opts[:payload].is_a?(FalseClass)
         end
 
         # merge all provided hashes into one single hash

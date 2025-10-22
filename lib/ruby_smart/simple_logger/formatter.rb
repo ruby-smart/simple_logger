@@ -171,18 +171,23 @@ module RubySmart
         end
       end
 
-      # returns the formatted string with a new-line.
+      # returns the formatted string with or without a new-line.
+      # Also drops a trailing new-line, if it exists.
       # depends, on the +:nl+ option.
       # @param [String, Array] data
       # @return [String]
       def _nl(data)
-        # convert to string
+        # convert possible array to string
         data = data.join("\n") if data.is_a?(Array)
 
-        # check for +nl+ flag
-        return data unless opts[:nl]
-
-        data + "\n"
+        # check, if a nl-flag should be added or dropped
+        if opts[:nl] && data[-1] != "\n"
+          data + "\n"
+        elsif !opts[:nl] && data[-1] == "\n"
+          data[0..-2]
+        else
+          data
+        end
       end
 
       # returns the formatted string with a color-code
